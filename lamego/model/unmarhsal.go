@@ -1,4 +1,4 @@
-package core
+package model
 
 // Everything in this file and relayed to the YAML library is temporary.
 // Eventually, a new YAML parser needs to be written in pure LaME, and

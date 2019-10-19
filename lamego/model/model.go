@@ -1,4 +1,4 @@
-package core
+package model
 
 var ModelRegistry map[string]Model
 
@@ -31,6 +31,19 @@ type Model struct {
 	Type    string   `yaml:"type"`
 	Fields  []Field  `yaml:"fields"`
 	Methods []Method `yaml:"methods"`
+}
+
+func (f Field) GetTypeObject() Type {
+	typePrimitive, isPrimitive := primitives[f.Type]
+	if isPrimitive {
+		return Type{
+			Primitive: typePrimitive,
+		}
+	}
+	return Type{
+		Primitive:  PrimitiveNotReally,
+		Identifier: f.Type,
+	}
 }
 
 func (m Model) generateHardcode(language LangSpec) {
