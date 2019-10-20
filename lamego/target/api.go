@@ -15,6 +15,10 @@ type FileManager interface {
 }
 
 type CursorConfig struct {
+	// TODO: It may be desirable to add a subIndent,
+	//       for example to add a base indentation of
+	//       4 spaces, and a sub-indentation of 2 spaces
+	//       for things like long boolean expressions.
 	IndentToken string
 }
 
@@ -65,36 +69,51 @@ type CodeCursor interface {
 	IncrIndent()
 	DecrIndent()
 	GetString() string
+	NewSubCursor(name string) CodeCursor
+	GetSubCursor(name string) CodeCursor
+}
+
+type InnerCursorGettable interface {
+	GetString() string
+}
+
+type GettableString struct { S *string }
+func (s GettableString) GetString() string {
+	return *(s.S)
 }
 
 type StringCodeCursor struct {
-	code        string
+	subCursors map[string]CodeCursor
+	gettables []InnerCursorGettable
+	code        *string
 	lineStarted bool
 
-	// TODO: It may be desirable to add a subIndent,
-	//       for example to add a base indentation of
-	//       4 spaces, and a sub-indentation of 2 spaces
-	//       for things like long boolean expressions.
+	config CursorConfig
 	indent      int
-	indentToken string
 }
 
 func NewStringCodeCursor(conf CursorConfig) *StringCodeCursor {
+	var initialString string
 	return &StringCodeCursor{
-		indentToken: conf.IndentToken,
+		config: conf,
+		subCursors: map[string]CodeCursor{},
+		gettables: []InnerCursorGettable{
+			GettableString{S: &initialString},
+		},
+		code: &initialString,
 	}
 }
 
 func (cc *StringCodeCursor) writeIndent() {
 	for i := 0; i < cc.indent; i++ {
-		cc.code += cc.indentToken
+		*cc.code += cc.config.IndentToken
 	}
 }
 
 func (cc *StringCodeCursor) AddLine(line string) {
 	cc.StartLine()
 	defer cc.EndLine()
-	cc.code += strings.TrimSpace(line)
+	*cc.code += strings.TrimSpace(line)
 }
 
 func (cc *StringCodeCursor) StartLine() {
@@ -110,14 +129,14 @@ func (cc *StringCodeCursor) EndLine() {
 		panic("Invalid use of CodeCursor - must start a line first!")
 	}
 	cc.lineStarted = false
-	cc.code += "\n"
+	*cc.code += "\n"
 }
 
 func (cc *StringCodeCursor) AddString(str string) {
 	if !cc.lineStarted {
 		panic("Invalid use of CodeCursor - must start a line first!")
 	}
-	cc.code += str
+	*cc.code += str
 }
 
 func (cc *StringCodeCursor) IncrIndent() {
@@ -129,7 +148,30 @@ func (cc *StringCodeCursor) DecrIndent() {
 }
 
 func (cc *StringCodeCursor) GetString() string {
-	return cc.code
+	fullString := ""
+	for _, gettable := range cc.gettables {
+		fullString += gettable.GetString()
+	}
+	return fullString
+}
+
+func (cc *StringCodeCursor) NewSubCursor(name string) CodeCursor {
+	// TODO: locks?
+	scc := NewStringCodeCursor(cc.config)
+	// Register subcursor to gettables and subCursors map
+	cc.subCursors[name] = scc
+	cc.gettables = append(cc.gettables, scc)
+
+	// Need to add a new GettableString for data after this cursor
+	var newWriteString string
+	cc.gettables = append(cc.gettables, GettableString{S: &newWriteString})
+	cc.code = &newWriteString
+
+	return scc
+}
+
+func (cc *StringCodeCursor) GetSubCursor(name string) CodeCursor {
+	return cc.subCursors[name]
 }
 
 type ClassGenerator interface {
