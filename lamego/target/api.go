@@ -11,6 +11,7 @@ import (
 
 type FileManager interface {
 	RequestFileForCode(relpath string) (CodeCursor, bool)
+	GetFiles() []string
 	FlushAll()
 }
 
@@ -44,6 +45,14 @@ func (fm DeFactoFileManager) RequestFileForCode(relpath string) (CodeCursor, boo
 	cc = NewStringCodeCursor(fm.CursorConfig)
 	fm.files[relpath] = cc
 	return cc, true
+}
+
+func (fm DeFactoFileManager) GetFiles() []string {
+	files := []string{}
+	for name := range fm.files {
+		files = append(files, name)
+	}
+	return files
 }
 
 func (fm DeFactoFileManager) FlushAll() {
@@ -176,4 +185,5 @@ func (cc *StringCodeCursor) GetSubCursor(name string) CodeCursor {
 
 type ClassGenerator interface {
 	WriteClass(cls Class, fm FileManager)
+	EndFile(path string, fm FileManager)
 }

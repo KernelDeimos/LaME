@@ -58,16 +58,26 @@ func main() {
 			IndentToken: "\t",
 		},
 	)
+
+	generatorsUsed := []target.ClassGenerator{}
+	cg := makeClassGeneratorGo()
+	generatorsUsed = append(generatorsUsed, cg)
+	switch targetLanguage {
+	case "go":
+		cg = makeClassGeneratorGo()
+	}
+
 	for i := 0; i < len(allModels); i++ {
 		m := allModels[i]
 		fmt.Printf("=== Found model: %s\n", m.ID)
 		c := engine.GenerateDefaultClass(m)
-		var cg target.ClassGenerator
-		switch targetLanguage {
-		case "go":
-			cg = makeClassGeneratorGo()
-		}
 		cg.WriteClass(c, fm)
+	}
+
+	for _, filename := range fm.GetFiles() {
+		for _, cg := range generatorsUsed {
+			cg.EndFile(filename, fm)
+		}
 	}
 
 	fm.FlushAll()

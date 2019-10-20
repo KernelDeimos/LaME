@@ -13,6 +13,16 @@ import (
 var MethodHeaderExpression = "func (o %s) %s(%s) %s"
 var MethodHeaderVoid = "func (o %s) %s(%s)"
 
+type FileState struct {
+	imports map[string]struct{}
+}
+
+var fileStates map[string]*FileState
+
+func init() {
+	fileStates = map[string]*FileState{}
+}
+
 type ClassGenerator struct {
 	WriteContext support.WriteContext
 }
@@ -24,50 +34,43 @@ func (object ClassGenerator) asClass_lame_core_ClassGenerator() target.ClassGene
 func (object ClassGenerator) WriteClass(
 	c target.Class, fm target.FileManager,
 ) {
-	// Get code cursor
-	cc, isNew := fm.RequestFileForCode(
-		strings.Join(
+	filename := strings.Join(
 			strings.Split(c.Package, "."),
-			"/") + "/generated_LaME.go")
+			"/") + "/generated_LaME.go"
+
+	// Get code cursor
+	cc, isNew := fm.RequestFileForCode(filename)
 
 	// Add instance variable to the write context
 	object.WriteContext.ClassInstanceVariable.Push("o")
 	defer object.WriteContext.ClassInstanceVariable.Unpush()
 	// Alright, writing a class in Go; here we go
 
+	var filestate *FileState
 	if isNew {
+		filestate = &FileState{}
+		fileStates[filename] = filestate
+
+		// Store imports for later writing to a subcursor
+		filestate.imports = map[string]struct{}{}
+
+		// Add package name and imports subcursor
 		packageElems := strings.Split(c.Package, ".")
 		packageName := packageElems[len(packageElems)-1]
 		cc.AddLine("// GENERATED CODE - changes to this file may be overwritten")
 		cc.AddLine("")
 		cc.AddLine("package " + packageName)
+		cc.NewSubCursor(support.CursorImports)
 		cc.AddLine("")
+	} else {
+		filestate = fileStates[filename]
 	}
-
-	// Start making an imports list (length determines output syntax)
-	imports := []string{}
 
 	// Add implicit imports (from LaME core meta attributes)
 	if c.Meta.Serialize.JSON {
-		imports = append(imports, "encoding/json")
+		filestate.imports["encoding/json"] = struct{}{}
 	}
 
-	// Write imports
-	if len(imports) > 0 {
-		if len(imports) == 1 {
-			cc.AddLine(`import "` + imports[0] + `"`)
-		} else {
-			func() {
-				cc.AddLine(`import (`)
-				defer cc.AddLine(`)`)
-				cc.IncrIndent()
-				defer cc.DecrIndent()
-				for _, importString := range imports {
-					cc.AddLine(`"` + importString + `"`)
-				}
-			}()
-		}
-	}
 
 	// Uhh.. I guess I gotta make a struct first
 	cc.AddLine("type " + c.Name + " struct {")
@@ -90,6 +93,38 @@ func (object ClassGenerator) WriteClass(
 
 	for _, m := range c.Methods {
 		object.writeMethod(c, cc, m)
+	}
+
+}
+
+func (object ClassGenerator) EndFile(
+	filename string, fm target.FileManager,
+) {
+	// Get code cursor and file-related state
+	cc, _ := fm.RequestFileForCode(filename)
+	filestate := fileStates[filename]
+	cc = cc.GetSubCursor(support.CursorImports)
+
+	imports := filestate.imports
+
+	// Write imports
+	if len(imports) > 0 {
+		cc.AddLine("")
+		if len(imports) == 1 {
+			for importString := range(imports) {
+				cc.AddLine(`import "` + importString + `"`)
+			}
+		} else {
+			func() {
+				cc.AddLine(`import (`)
+				defer cc.AddLine(`)`)
+				cc.IncrIndent()
+				defer cc.DecrIndent()
+				for importString := range imports {
+					cc.AddLine(`"` + importString + `"`)
+				}
+			}()
+		}
 	}
 }
 
