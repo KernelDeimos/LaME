@@ -25,7 +25,7 @@ func (object ClassGenerator) WriteClass(
 	c target.Class, fm target.FileManager,
 ) {
 	// Get code cursor
-	cc := fm.RequestFileForCode(
+	cc, isNew := fm.RequestFileForCode(
 		strings.Join(
 			strings.Split(c.Package, "."),
 			"/") + "/generated_LaME.go")
@@ -34,6 +34,15 @@ func (object ClassGenerator) WriteClass(
 	object.WriteContext.ClassInstanceVariable.Push("o")
 	defer object.WriteContext.ClassInstanceVariable.Unpush()
 	// Alright, writing a class in Go; here we go
+
+	if isNew {
+		packageElems := strings.Split(c.Package, ".")
+		packageName := packageElems[len(packageElems)-1]
+		cc.AddLine("// GENERATED CODE - changes to this file may be overwritten")
+		cc.AddLine("")
+		cc.AddLine("package " + packageName)
+		cc.AddLine("")
+	}
 
 	// Uhh.. I guess I gotta make a struct first
 	cc.AddLine("type " + c.Name + " struct {")

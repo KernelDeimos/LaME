@@ -52,12 +52,12 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	var fm target.FileManager = target.DeFactoFileManager{
-		RootPath: outputDir,
-		CursorConfig: target.CursorConfig{
+	var fm target.FileManager = target.NewDeFactoFileManager(
+		outputDir,
+		target.CursorConfig{
 			IndentToken: "\t",
 		},
-	}
+	)
 	for i := 0; i < len(allModels); i++ {
 		m := allModels[i]
 		fmt.Printf("=== Found model: %s\n", m.ID)
@@ -69,6 +69,8 @@ func main() {
 		}
 		cg.WriteClass(c, fm)
 	}
+
+	fm.FlushAll()
 }
 
 func makeClassGeneratorGo() gengo.ClassGenerator {

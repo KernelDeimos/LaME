@@ -2,6 +2,7 @@ package target
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -9,7 +10,7 @@ import (
 // THIS FILE: Core Programming Interface for Code Generation
 
 type FileManager interface {
-	RequestFileForCode(relpath string) CodeCursor
+	RequestFileForCode(relpath string) (CodeCursor, bool)
 	FlushAll()
 }
 
@@ -23,22 +24,36 @@ type DeFactoFileManager struct {
 	files        map[string]CodeCursor
 }
 
-func (fm DeFactoFileManager) RequestFileForCode(relpath string) CodeCursor {
+func NewDeFactoFileManager(outputDir string, cc CursorConfig) DeFactoFileManager {
+	return DeFactoFileManager{
+		RootPath:     outputDir,
+		CursorConfig: cc,
+		files:        map[string]CodeCursor{},
+	}
+}
+
+func (fm DeFactoFileManager) RequestFileForCode(relpath string) (CodeCursor, bool) {
 	cc, exists := fm.files[relpath]
 	if exists {
-		return cc
+		return cc, false
 	}
 	cc = NewStringCodeCursor(fm.CursorConfig)
 	fm.files[relpath] = cc
-	return cc
+	return cc, true
 }
 
 func (fm DeFactoFileManager) FlushAll() {
 	for path, cursor := range fm.files {
 		realPath := filepath.Join(fm.RootPath, path)
-		err := ioutil.WriteFile(realPath, []byte(cursor.GetString()), 0644)
+		err := os.MkdirAll(filepath.Dir(realPath), os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(realPath, []byte(cursor.GetString()), 0644)
 		// TODO: Need a LaME error type to return
-		panic(err)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

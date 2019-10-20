@@ -1,0 +1,13 @@
+- DEFINE_MODELS
+- id: project.models.Passenger
+  feilds:
+  - name: testthing
+    type: string
+  - [name, string]
+  - [email, string]
+- id: project.models.Booking
+  fields:
+  - name: passenger
+    type: project.models.Passenger
+  - name: notes
+    type: string
