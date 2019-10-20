@@ -8,17 +8,19 @@ var primitives = map[string]Primitive{
 	"int":    'i',
 	"float":  'f',
 	"object": 'o', // TODO: support for this might be weird
+	"void":   'v',
 	"lame":   'l',
 	"LaME":   'l', // Also allow stylized version, of course
 }
 
 const (
-	PrimitiveString    = 's'
-	PrimitiveBool      = 'b'
-	PrimitiveInt       = 'i'
-	PrimitiveFloat     = 'f'
-	PrimitiveObject    = 'o'
-	PrimitiveNotReally = 'l'
+	PrimitiveString = 's'
+	PrimitiveBool   = 'b'
+	PrimitiveInt    = 'i'
+	PrimitiveFloat  = 'f'
+	PrimitiveObject = 'o'
+	PrimitiveVoid   = 'v'
+	PrimitiveLaME   = 'l'
 )
 
 type Type struct {

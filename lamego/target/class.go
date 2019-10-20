@@ -12,9 +12,22 @@ const (
 	VisibilityProtected = 'd'
 )
 
+type TypeOfType byte
+
+const (
+	PrimitiveType TypeOfType = 'p'
+	LaMEType                 = 'l'
+	TargetType               = 't'
+)
+
+type Type struct {
+	TypeOfType TypeOfType
+	Identifier string
+}
+
 type Variable struct {
 	Name string
-	Type model.Type
+	Type Type
 }
 
 type ClassVariable struct {
@@ -22,30 +35,11 @@ type ClassVariable struct {
 	Visibility Visibility
 }
 
-type FunctionCodeWriter interface {
-	//
-}
-
-type SequenceableInstruction interface {
-	GetStatementWriter()
-}
-
-type ExpressionInstruction interface {
-	GetExpressionWriter()
-}
-
-type HardcodeFunctionWriter struct{}
-type LispiLangFunctionWriter struct {
-}
-type LispiFunctionWriter struct {
-	Instructions []SequenceableInstruction
-}
-
 type Method struct {
 	Name      string
 	Arguments []Variable
 	Return    Variable
-	Code      FunctionCodeWriter
+	Code      model.FakeBlock
 }
 
 type ClassReference string

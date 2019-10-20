@@ -41,7 +41,7 @@ func (f Field) GetTypeObject() Type {
 		}
 	}
 	return Type{
-		Primitive:  PrimitiveNotReally,
+		Primitive:  PrimitiveLaME,
 		Identifier: f.Type,
 	}
 }

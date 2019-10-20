@@ -8,7 +8,29 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
-func GenerateDefaultClass(m model.Model) {
+func ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
+	if tIn.Primitive == model.PrimitiveLaME {
+		tOut.TypeOfType = target.LaMEType
+		tOut.Identifier = tIn.Identifier
+		return
+	}
+
+	tOut.TypeOfType = target.PrimitiveType
+
+	m := map[model.Primitive]string{
+		model.PrimitiveString: target.PrimitiveString,
+		model.PrimitiveBool:   target.PrimitiveBool,
+		model.PrimitiveInt:    target.PrimitiveInt,
+		model.PrimitiveFloat:  target.PrimitiveFloat,
+		model.PrimitiveObject: target.PrimitiveObject,
+		model.PrimitiveVoid:   target.PrimitiveVoid,
+	}
+
+	tOut.Identifier = m[tIn.Primitive]
+	return
+}
+
+func GenerateDefaultClass(m model.Model) target.Class {
 	// Get name & package from model ID
 	c := target.Class{}
 	{
@@ -26,20 +48,36 @@ func GenerateDefaultClass(m model.Model) {
 		c.Methods = []target.Method{}
 
 		for _, f := range m.Fields {
+			fieldType := ModelTypeToTargetType(f.GetTypeObject())
+			privateName := f.Name + "__"
 			c.Variables = append(c.Variables, target.Variable{
-				Name: f.Name + "__",
-				Type: f.GetTypeObject(),
+				Name: privateName,
+				Type: fieldType,
 			})
 			c.Variables = append(c.Variables, target.Variable{
 				Name: f.Name + "__isSet",
-				Type: model.Bool,
+				Type: target.Bool,
 			})
 			c.Methods = append(c.Methods, target.Method{
 				Name: "get" + util.String.Capitalize(f.Name),
+				Return: target.Variable{
+					Type: fieldType,
+				},
+				Arguments: []target.Variable{},
+				Code: model.FakeBlock{
+					StatementList: []model.SequenceableInstruction{
+						model.Return{
+							Expression: model.IGet{
+								Name: privateName,
+							},
+						},
+					},
+				},
 			})
 		}
 	}
 
+	return c
 	// What next?: Add variables | Add methods | Add getters/settings
 
 }
