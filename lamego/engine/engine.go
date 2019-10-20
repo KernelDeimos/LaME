@@ -2,13 +2,101 @@ package engine
 
 import (
 	"strings"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/KernelDeimos/LaME/lamego/model"
 	"github.com/KernelDeimos/LaME/lamego/target"
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
-func ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
+type SyntaxFrontend interface{}
+
+type Engine struct {
+	Config EngineConfig
+	SyntaxFrontends map[string]SyntaxFrontend
+	ClassGenerators map[string]target.ClassGenerator
+	TargetLanguage string
+}
+
+type EngineConfig struct {
+	//
+}
+
+type EngineRunConfig struct {
+	TargetLanguage string
+	ModelSourceDirectory string
+	GeneratorOutputDirectory string
+}
+
+func NewEngine(config EngineConfig) *Engine {
+	e := Engine{
+		Config: config,
+	}
+	return &e
+}
+
+type EngineError interface{}
+type DeFactoEngineError struct{
+	M string
+}
+
+func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
+	allModels := []model.Model{}
+
+	// Walk model source directory and load models
+	callback := func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) == ".yaml" {
+			m := []model.Model{}
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			err = yaml.Unmarshal(b, &m)
+			if err != nil {
+				return err
+			}
+			allModels = append(allModels, m[1:]...)
+		}
+		return nil
+	}
+	err := filepath.Walk(
+		runConfig.ModelSourceDirectory, callback)
+	if err != nil {
+		return DeFactoEngineError{M: err.Error()}
+	}
+
+	var fm target.FileManager = target.NewDeFactoFileManager(
+		runConfig.GeneratorOutputDirectory,
+		target.CursorConfig{
+			IndentToken: "\t",
+		},
+	)
+
+	// Get the expected ClassGenerator
+	cg, exists := e.ClassGenerators[runConfig.TargetLanguage]
+	if !exists {
+		return DeFactoEngineError{M: "Unrecognized target language"}
+	}
+
+	for i := 0; i < len(allModels); i++ {
+		m := allModels[i]
+		c := e.GenerateDefaultClass(m)
+		cg.WriteClass(c, fm)
+	}
+
+	for _, filename := range fm.GetFiles() {
+		cg.EndFile(filename, fm)
+	}
+
+	fm.FlushAll()
+	return nil
+}
+
+func (e *Engine) ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
 	if tIn.Primitive == model.PrimitiveLaME {
 		tOut.TypeOfType = target.LaMEType
 		tOut.Identifier = tIn.Identifier
@@ -30,7 +118,7 @@ func ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
 	return
 }
 
-func GenerateDefaultClass(m model.Model) target.Class {
+func (e *Engine) GenerateDefaultClass(m model.Model) target.Class {
 	// Get name & package from model ID
 	c := target.Class{}
 	{
@@ -53,7 +141,7 @@ func GenerateDefaultClass(m model.Model) target.Class {
 		c.Methods = []target.Method{}
 
 		for _, f := range m.Fields {
-			fieldType := ModelTypeToTargetType(f.GetTypeObject())
+			fieldType := e.ModelTypeToTargetType(f.GetTypeObject())
 			privateName := f.Name + "__"
 			issetName := privateName + "isSet"
 			c.Variables = append(c.Variables, target.Variable{
@@ -109,6 +197,14 @@ func GenerateDefaultClass(m model.Model) target.Class {
 				},
 			})
 		}
+
+		/*
+		for _, me := range m.Methods {
+			// TODO: Need to know the target language
+			//       here for choosing hardcode options
+			// m.Meta.GencodeSyntaxFrontend
+		}
+		*/
 
 		if c.Meta.Serialize.JSON {
 			c.Methods = append(c.Methods, target.Method{

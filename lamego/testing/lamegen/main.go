@@ -2,19 +2,12 @@ package main
 
 import (
 	// "encoding/json"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-
-	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
 	"github.com/KernelDeimos/LaME/lamego/engine"
 	// "github.com/KernelDeimos/LaME/lamego/generators"
-	"github.com/KernelDeimos/LaME/lamego/model"
-	"github.com/KernelDeimos/LaME/lamego/support"
 	"github.com/KernelDeimos/LaME/lamego/target"
+	"github.com/KernelDeimos/LaME/lamego/support"
 
 	"github.com/KernelDeimos/LaME/lamego/generators/gengo"
 )
@@ -30,57 +23,20 @@ func main() {
 		outputDir = args[2]
 	}
 
-	allModels := []model.Model{}
 
-	callback := func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) == ".yaml" {
-			m := []model.Model{}
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			err = yaml.Unmarshal(b, &m)
-			if err != nil {
-				return err
-			}
-			allModels = append(allModels, m[1:]...)
-		}
-		return nil
-	}
-	err := filepath.Walk(modelDir, callback)
-	if err != nil {
-		logrus.Fatal(err)
+	e := engine.NewEngine(engine.EngineConfig{
+		//
+	})
+	e.ClassGenerators = map[string]target.ClassGenerator{
+		"go": makeClassGeneratorGo(),
 	}
 
-	var fm target.FileManager = target.NewDeFactoFileManager(
-		outputDir,
-		target.CursorConfig{
-			IndentToken: "\t",
-		},
-	)
+	e.Generate(engine.EngineRunConfig{
+		ModelSourceDirectory: modelDir,
+		GeneratorOutputDirectory: outputDir,
+		TargetLanguage: targetLanguage,
+	})
 
-	generatorsUsed := []target.ClassGenerator{}
-	cg := makeClassGeneratorGo()
-	generatorsUsed = append(generatorsUsed, cg)
-	switch targetLanguage {
-	case "go":
-		cg = makeClassGeneratorGo()
-	}
-
-	for i := 0; i < len(allModels); i++ {
-		m := allModels[i]
-		fmt.Printf("=== Found model: %s\n", m.ID)
-		c := engine.GenerateDefaultClass(m)
-		cg.WriteClass(c, fm)
-	}
-
-	for _, filename := range fm.GetFiles() {
-		for _, cg := range generatorsUsed {
-			cg.EndFile(filename, fm)
-		}
-	}
-
-	fm.FlushAll()
 }
 
 func makeClassGeneratorGo() gengo.ClassGenerator {

@@ -26,11 +26,24 @@ type Method struct {
 	Hardcode map[string]string `yaml:"hardcode"`
 }
 
+type ModelMeta struct {
+	GencodeSyntaxFrontend string `yaml:"gencodeSyntaxFrontend"`
+}
+
 type Model struct {
 	ID      string   `yaml:"id"`
 	Type    string   `yaml:"type"`
+	Meta ModelMeta `yaml:"meta"`
 	Fields  []Field  `yaml:"fields"`
 	Methods []Method `yaml:"methods"`
+}
+
+func NewDefaultModel() Model {
+	return Model{
+		Meta: ModelMeta{
+			GencodeSyntaxFrontend: "LisPI-Natural",
+		},
+	}
 }
 
 func (f Field) GetTypeObject() Type {
