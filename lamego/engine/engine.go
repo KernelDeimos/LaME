@@ -43,6 +43,11 @@ func GenerateDefaultClass(m model.Model) target.Class {
 		}
 		c.Name = name
 		c.Package = pkgName
+		c.Meta = target.ClassMeta{
+			Serialize: target.SerializeMeta{
+				JSON: true,
+			},
+		}
 
 		c.Variables = []target.Variable{}
 		c.Methods = []target.Method{}
@@ -99,6 +104,23 @@ func GenerateDefaultClass(m model.Model) target.Class {
 							Expression: model.VGet{
 								Name: "v",
 							},
+						},
+					},
+				},
+			})
+		}
+
+		if c.Meta.Serialize.JSON {
+			c.Methods = append(c.Methods, target.Method{
+				Name: "serializeJSON",
+				Return: target.Variable{
+					Type: target.String,
+				},
+				Arguments: []target.Variable{},
+				Code: model.FakeBlock{
+					StatementList: []model.SequenceableInstruction{
+						model.Return{
+							Expression: model.ISerializeJSON{},
 						},
 					},
 				},

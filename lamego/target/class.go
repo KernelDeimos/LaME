@@ -51,6 +51,9 @@ type ClassReference string
 type Class struct {
 	Package string
 	Name    string
+
+	Meta ClassMeta
+
 	// Extend should be for language-related purposes only. For instance,
 	// in Java this is critical in defining the exception hierarchy.
 	// Otherwise, real "extending" should happen in the code generator,

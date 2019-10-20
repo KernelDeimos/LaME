@@ -59,6 +59,10 @@ type LiteralString struct {
 
 func (i LiteralString) AsExpressionInstruction() ExpressionInstruction { return i }
 
+type ISerializeJSON struct{}
+
+func (i ISerializeJSON) AsExpressionInstruction() ExpressionInstruction { return i }
+
 /*
       return
         AND

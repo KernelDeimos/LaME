@@ -44,6 +44,31 @@ func (object ClassGenerator) WriteClass(
 		cc.AddLine("")
 	}
 
+	// Start making an imports list (length determines output syntax)
+	imports := []string{}
+
+	// Add implicit imports (from LaME core meta attributes)
+	if c.Meta.Serialize.JSON {
+		imports = append(imports, "encoding/json")
+	}
+
+	// Write imports
+	if len(imports) > 0 {
+		if len(imports) == 1 {
+			cc.AddLine(`import "` + imports[0] + `"`)
+		} else {
+			func() {
+				cc.AddLine(`import (`)
+				defer cc.AddLine(`)`)
+				cc.IncrIndent()
+				defer cc.DecrIndent()
+				for _, importString := range imports {
+					cc.AddLine(`"` + importString + `"`)
+				}
+			}()
+		}
+	}
+
 	// Uhh.. I guess I gotta make a struct first
 	cc.AddLine("type " + c.Name + " struct {")
 
@@ -164,5 +189,20 @@ func (object ClassGenerator) writeExpressionInstruction(
 			str = "true"
 		}
 		cc.AddString(str)
+	case model.ISerializeJSON:
+		// TODO: maybe replace this with a lispi statement
+		// TODO: creating this anonymous function makes me
+		//  wonder how expressions that require multiple
+		//  statements of logic will be implemented for the
+		//  target languages that don't support this.
+		cc.AddString("(func() string {")
+		cc.EndLine()
+		cc.IncrIndent()
+		cc.AddLine("bout, err := json.Marshal(o)")
+		cc.AddLine("if err != nil { return \"\" }")
+		cc.AddLine("return string(bout)")
+		cc.DecrIndent()
+		cc.StartLine()
+		cc.AddString("})()")
 	}
 }

@@ -2,7 +2,15 @@
 
 package models
 
+import "encoding/json"
 type Passenger struct {
+}
+func (o Passenger) serializeJSON() string {
+	return (func() string {
+		bout, err := json.Marshal(o)
+		if err != nil { return "" }
+		return string(bout)
+	})()
 }
 type Booking struct {
 	passenger__ project.models.Passenger
@@ -23,4 +31,11 @@ func (o Booking) getNotes() string {
 func (o Booking) setNotes(v string) {
 	o.notes__isSet = true
 	o.notes__ = v
+}
+func (o Booking) serializeJSON() string {
+	return (func() string {
+		bout, err := json.Marshal(o)
+		if err != nil { return "" }
+		return string(bout)
+	})()
 }
