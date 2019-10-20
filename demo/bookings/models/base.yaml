@@ -1,6 +1,6 @@
 - DEFINE_MODELS
 - id: project.models.Passenger
-  feilds:
+  fields:
   - name: testthing
     type: string
   - [name, string]
