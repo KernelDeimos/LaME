@@ -1,10 +1,46 @@
 package target
 
 import (
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
 // THIS FILE: Core Programming Interface for Code Generation
+
+type FileManager interface {
+	RequestFileForCode(relpath string) CodeCursor
+	FlushAll()
+}
+
+type CursorConfig struct {
+	IndentToken string
+}
+
+type DeFactoFileManager struct {
+	RootPath     string
+	CursorConfig CursorConfig
+	files        map[string]CodeCursor
+}
+
+func (fm DeFactoFileManager) RequestFileForCode(relpath string) CodeCursor {
+	cc, exists := fm.files[relpath]
+	if exists {
+		return cc
+	}
+	cc = NewStringCodeCursor(fm.CursorConfig)
+	fm.files[relpath] = cc
+	return cc
+}
+
+func (fm DeFactoFileManager) FlushAll() {
+	for path, cursor := range fm.files {
+		realPath := filepath.Join(fm.RootPath, path)
+		err := ioutil.WriteFile(realPath, []byte(cursor.GetString()), 0644)
+		// TODO: Need a LaME error type to return
+		panic(err)
+	}
+}
 
 type CodeCursor interface {
 	AddLine(line string)
@@ -28,9 +64,9 @@ type StringCodeCursor struct {
 	indentToken string
 }
 
-func NewStringCodeCursor(indentToken string) *StringCodeCursor {
+func NewStringCodeCursor(conf CursorConfig) *StringCodeCursor {
 	return &StringCodeCursor{
-		indentToken: indentToken,
+		indentToken: conf.IndentToken,
 	}
 }
 
@@ -82,5 +118,5 @@ func (cc *StringCodeCursor) GetString() string {
 }
 
 type ClassGenerator interface {
-	WriteClass(cls Class, cc CodeCursor)
+	WriteClass(cls Class, fm FileManager)
 }

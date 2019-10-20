@@ -22,8 +22,14 @@ func (object ClassGenerator) asClass_lame_core_ClassGenerator() target.ClassGene
 }
 
 func (object ClassGenerator) WriteClass(
-	c target.Class, cc target.CodeCursor,
+	c target.Class, fm target.FileManager,
 ) {
+	// Get code cursor
+	cc := fm.RequestFileForCode(
+		strings.Join(
+			strings.Split(c.Package, "."),
+			"/") + "/generated_LaME.go")
+
 	// Add instance variable to the write context
 	object.WriteContext.ClassInstanceVariable.Push("o")
 	defer object.WriteContext.ClassInstanceVariable.Unpush()

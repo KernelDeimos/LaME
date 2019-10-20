@@ -48,7 +48,9 @@ func main() {
 			}
 		*/
 		// fmt.Println(string(dat))
-		var codeCursor target.CodeCursor = target.NewStringCodeCursor("\t")
+		var codeCursor target.CodeCursor = target.NewStringCodeCursor(target.CursorConfig{
+			IndentToken: "\t",
+		})
 		cg := makeClassGeneratorGo()
 		cg.WriteClass(c, codeCursor)
 		fmt.Println(codeCursor.GetString())
