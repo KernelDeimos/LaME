@@ -34,6 +34,25 @@ type IGet struct {
 
 func (i IGet) AsExpressionInstruction() ExpressionInstruction { return i }
 
+type ISet struct {
+	Name       string
+	Expression ExpressionInstruction
+}
+
+func (i ISet) AsSequenceableInstruction() SequenceableInstruction { return i }
+
+type VGet struct {
+	Name string
+}
+
+func (i VGet) AsExpressionInstruction() ExpressionInstruction { return i }
+
+type LiteralBool struct {
+	Value bool
+}
+
+func (i LiteralBool) AsExpressionInstruction() ExpressionInstruction { return i }
+
 type LiteralString struct {
 	Value string
 }

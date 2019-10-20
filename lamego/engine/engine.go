@@ -50,12 +50,13 @@ func GenerateDefaultClass(m model.Model) target.Class {
 		for _, f := range m.Fields {
 			fieldType := ModelTypeToTargetType(f.GetTypeObject())
 			privateName := f.Name + "__"
+			issetName := privateName + "isSet"
 			c.Variables = append(c.Variables, target.Variable{
 				Name: privateName,
 				Type: fieldType,
 			})
 			c.Variables = append(c.Variables, target.Variable{
-				Name: f.Name + "__isSet",
+				Name: issetName,
 				Type: target.Bool,
 			})
 			c.Methods = append(c.Methods, target.Method{
@@ -69,6 +70,34 @@ func GenerateDefaultClass(m model.Model) target.Class {
 						model.Return{
 							Expression: model.IGet{
 								Name: privateName,
+							},
+						},
+					},
+				},
+			})
+			c.Methods = append(c.Methods, target.Method{
+				Name: "set" + util.String.Capitalize(f.Name),
+				Return: target.Variable{
+					Type: target.Void,
+				},
+				Arguments: []target.Variable{
+					target.Variable{
+						Name: "v",
+						Type: fieldType,
+					},
+				},
+				Code: model.FakeBlock{
+					StatementList: []model.SequenceableInstruction{
+						model.ISet{
+							Name: issetName,
+							Expression: model.LiteralBool{
+								Value: true,
+							},
+						},
+						model.ISet{
+							Name: privateName,
+							Expression: model.VGet{
+								Name: "v",
 							},
 						},
 					},

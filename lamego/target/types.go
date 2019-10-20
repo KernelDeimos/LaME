@@ -11,3 +11,8 @@ var Bool Type = Type{
 	TypeOfType: PrimitiveType,
 	Identifier: PrimitiveBool,
 }
+
+var Void Type = Type{
+	TypeOfType: PrimitiveType,
+	Identifier: PrimitiveVoid,
+}

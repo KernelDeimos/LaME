@@ -43,7 +43,7 @@ func (cc *StringCodeCursor) writeIndent() {
 func (cc *StringCodeCursor) AddLine(line string) {
 	cc.StartLine()
 	defer cc.EndLine()
-	cc.code += strings.TrimSpace(line) + "\n"
+	cc.code += strings.TrimSpace(line)
 }
 
 func (cc *StringCodeCursor) StartLine() {

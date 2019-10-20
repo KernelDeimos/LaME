@@ -113,6 +113,7 @@ func (object ClassGenerator) writeSequenceableInstruction(
 	cc target.CodeCursor,
 	ins model.SequenceableInstruction,
 ) {
+	instance := object.WriteContext.ClassInstanceVariable.Get()
 	// If this type switch thing raises any questions about
 	// support for langauge definitions written in other
 	// langauges, don't worry; I have a plan.
@@ -121,6 +122,12 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		cc.StartLine()
 		defer cc.EndLine()
 		cc.AddString("return ")
+		object.writeExpressionInstruction(cc, specificIns.Expression)
+	case model.ISet:
+		cc.StartLine()
+		defer cc.EndLine()
+		cc.AddString(instance + "." + specificIns.Name +
+			" = ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
 	}
 }
@@ -134,5 +141,13 @@ func (object ClassGenerator) writeExpressionInstruction(
 		instance := object.WriteContext.ClassInstanceVariable.Get()
 		cc.AddString(instance + ".get" +
 			util.String.Capitalize(specificIns.Name))
+	case model.VGet:
+		cc.AddString(specificIns.Name)
+	case model.LiteralBool:
+		str := "false"
+		if specificIns.Value {
+			str = "true"
+		}
+		cc.AddString(str)
 	}
 }
