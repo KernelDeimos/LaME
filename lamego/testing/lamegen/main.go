@@ -4,6 +4,8 @@ import (
 	// "encoding/json"
 	"os"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/KernelDeimos/LaME/lamego/engine"
 	// "github.com/KernelDeimos/LaME/lamego/generators"
 	"github.com/KernelDeimos/LaME/lamego/target"
@@ -23,7 +25,6 @@ func main() {
 		outputDir = args[2]
 	}
 
-
 	e := engine.NewEngine(engine.EngineConfig{
 		//
 	})
@@ -31,11 +32,15 @@ func main() {
 		"go": makeClassGeneratorGo(),
 	}
 
-	e.Generate(engine.EngineRunConfig{
+	err := e.Generate(engine.EngineRunConfig{
 		ModelSourceDirectory: modelDir,
 		GeneratorOutputDirectory: outputDir,
 		TargetLanguage: targetLanguage,
 	})
+
+	if err != nil {
+		logrus.Fatal(err.String())
+	}
 
 }
 

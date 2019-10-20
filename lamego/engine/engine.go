@@ -39,9 +39,14 @@ func NewEngine(config EngineConfig) *Engine {
 	return &e
 }
 
-type EngineError interface{}
+type EngineError interface{
+	String() string
+}
 type DeFactoEngineError struct{
 	M string
+}
+func (ee DeFactoEngineError) String() string {
+	return ee.M
 }
 
 func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
