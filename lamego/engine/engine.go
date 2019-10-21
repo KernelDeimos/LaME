@@ -1,25 +1,29 @@
 package engine
 
 import (
-	"strings"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
 	"github.com/KernelDeimos/LaME/lamego/model"
+	"github.com/KernelDeimos/LaME/lamego/parsing"
 	"github.com/KernelDeimos/LaME/lamego/target"
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
-type SyntaxFrontend interface{}
+type SyntaxFrontend interface {
+	Process(script string) ([]model.SequenceableInstruction, error)
+}
 
 type Engine struct {
-	Config EngineConfig
+	Config          EngineConfig
 	SyntaxFrontends map[string]SyntaxFrontend
 	ClassGenerators map[string]target.ClassGenerator
-	TargetLanguage string
+	TargetLanguage  string
 }
 
 type EngineConfig struct {
@@ -27,24 +31,28 @@ type EngineConfig struct {
 }
 
 type EngineRunConfig struct {
-	TargetLanguage string
-	ModelSourceDirectory string
+	TargetLanguage           string
+	ModelSourceDirectory     string
 	GeneratorOutputDirectory string
 }
 
 func NewEngine(config EngineConfig) *Engine {
 	e := Engine{
 		Config: config,
+		SyntaxFrontends: map[string]SyntaxFrontend{
+			"LisPI-Natural": parsing.SyntaxFrontendLisPINatural{},
+		},
 	}
 	return &e
 }
 
-type EngineError interface{
+type EngineError interface {
 	String() string
 }
-type DeFactoEngineError struct{
+type DeFactoEngineError struct {
 	M string
 }
+
 func (ee DeFactoEngineError) String() string {
 	return ee.M
 }
@@ -89,7 +97,7 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 
 	for i := 0; i < len(allModels); i++ {
 		m := allModels[i]
-		c := e.GenerateDefaultClass(m)
+		c := e.GenerateDefaultClass(m, runConfig)
 		cg.WriteClass(c, fm)
 	}
 
@@ -123,7 +131,8 @@ func (e *Engine) ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
 	return
 }
 
-func (e *Engine) GenerateDefaultClass(m model.Model) target.Class {
+func (e *Engine) GenerateDefaultClass(
+	m model.Model, runConfig EngineRunConfig) target.Class {
 	// Get name & package from model ID
 	c := target.Class{}
 	{
@@ -203,13 +212,63 @@ func (e *Engine) GenerateDefaultClass(m model.Model) target.Class {
 			})
 		}
 
-		/*
 		for _, me := range m.Methods {
-			// TODO: Need to know the target language
-			//       here for choosing hardcode options
-			// m.Meta.GencodeSyntaxFrontend
+			// TODO: throws panic on unrecognized syntax frontend
+			sf := e.SyntaxFrontends[m.Meta.GencodeSyntaxFrontend]
+
+			var code string
+			var codeSet bool
+
+			// Prioritize language-targeted code
+			for lang, thisCode := range me.Hardcode {
+				if lang == runConfig.TargetLanguage {
+					code = thisCode
+					codeSet = true
+				}
+			}
+
+			var instructions []model.SequenceableInstruction
+			if codeSet {
+				instructions = []model.SequenceableInstruction{
+					model.Raw{
+						Value: code,
+					},
+				}
+			} else {
+				var err error
+				if sf == nil {
+					fmt.Println(e.SyntaxFrontends)
+					fmt.Println(m.Meta.GencodeSyntaxFrontend)
+				}
+				instructions, err = sf.Process(me.Gencode)
+				if err != nil {
+					panic(err) // TODO
+				}
+			}
+
+			methodArgs := []target.Variable{}
+			for _, arg := range me.Args {
+				methodArgs = append(methodArgs, target.Variable{
+					Name: arg.Name,
+					Type: e.ModelTypeToTargetType(
+						model.GetTypeObject(arg.Type),
+					),
+				})
+			}
+
+			c.Methods = append(c.Methods, target.Method{
+				Name: me.Name,
+				Return: target.Variable{
+					Type: e.ModelTypeToTargetType(
+						model.GetTypeObject(me.Return),
+					),
+				},
+				Arguments: methodArgs,
+				Code: model.FakeBlock{
+					StatementList: instructions,
+				},
+			})
 		}
-		*/
 
 		if c.Meta.Serialize.JSON {
 			c.Methods = append(c.Methods, target.Method{

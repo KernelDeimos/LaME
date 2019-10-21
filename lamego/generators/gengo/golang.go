@@ -35,8 +35,8 @@ func (object ClassGenerator) WriteClass(
 	c target.Class, fm target.FileManager,
 ) {
 	filename := strings.Join(
-			strings.Split(c.Package, "."),
-			"/") + "/generated_LaME.go"
+		strings.Split(c.Package, "."),
+		"/") + "/generated_LaME.go"
 
 	// Get code cursor
 	cc, isNew := fm.RequestFileForCode(filename)
@@ -70,7 +70,6 @@ func (object ClassGenerator) WriteClass(
 	if c.Meta.Serialize.JSON {
 		filestate.imports["encoding/json"] = struct{}{}
 	}
-
 
 	// Uhh.. I guess I gotta make a struct first
 	cc.AddLine("type " + c.Name + " struct {")
@@ -111,7 +110,7 @@ func (object ClassGenerator) EndFile(
 	if len(imports) > 0 {
 		cc.AddLine("")
 		if len(imports) == 1 {
-			for importString := range(imports) {
+			for importString := range imports {
 				cc.AddLine(`import "` + importString + `"`)
 			}
 		} else {
@@ -215,7 +214,7 @@ func (object ClassGenerator) writeExpressionInstruction(
 	case model.IGet:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
 		cc.AddString(instance + ".get" +
-			util.String.Capitalize(specificIns.Name))
+			util.String.Capitalize(specificIns.Name) + "()")
 	case model.VGet:
 		cc.AddString(specificIns.Name)
 	case model.LiteralBool:

@@ -5,6 +5,12 @@
     type: string
   - [name, string]
   - [email, string]
+  methods:
+  - name: toCSV
+    args: []
+    return: string
+    gencode: |
+      (return (iget name))
 - id: project.models.Booking
   fields:
   - name: passenger

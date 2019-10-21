@@ -22,6 +22,7 @@ type Field struct {
 type Method struct {
 	Name     string            `yaml:"name"`
 	Args     []Argument        `yaml:"args"`
+	Return   string            `yaml:"return"`
 	Gencode  string            `yaml:"gencode"`
 	Hardcode map[string]string `yaml:"hardcode"`
 }
@@ -31,11 +32,11 @@ type ModelMeta struct {
 }
 
 type Model struct {
-	ID      string   `yaml:"id"`
-	Type    string   `yaml:"type"`
-	Meta ModelMeta `yaml:"meta"`
-	Fields  []Field  `yaml:"fields"`
-	Methods []Method `yaml:"methods"`
+	ID      string    `yaml:"id"`
+	Type    string    `yaml:"type"`
+	Meta    ModelMeta `yaml:"meta"`
+	Fields  []Field   `yaml:"fields"`
+	Methods []Method  `yaml:"methods"`
 }
 
 func NewDefaultModel() Model {
@@ -47,7 +48,12 @@ func NewDefaultModel() Model {
 }
 
 func (f Field) GetTypeObject() Type {
-	typePrimitive, isPrimitive := primitives[f.Type]
+	return GetTypeObject(f.Type)
+}
+
+// TODO: this is silly; just do it properly in engine
+func GetTypeObject(typ string) Type {
+	typePrimitive, isPrimitive := primitives[typ]
 	if isPrimitive {
 		return Type{
 			Primitive: typePrimitive,
@@ -55,7 +61,7 @@ func (f Field) GetTypeObject() Type {
 	}
 	return Type{
 		Primitive:  PrimitiveLaME,
-		Identifier: f.Type,
+		Identifier: typ,
 	}
 }
 

@@ -63,6 +63,13 @@ type ISerializeJSON struct{}
 
 func (i ISerializeJSON) AsExpressionInstruction() ExpressionInstruction { return i }
 
+type Raw struct {
+	Value string
+}
+
+func (i Raw) AsExpressionInstruction() ExpressionInstruction     { return i }
+func (i Raw) AsSequenceableInstruction() SequenceableInstruction { return i }
+
 /*
       return
         AND

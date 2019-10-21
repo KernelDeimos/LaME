@@ -109,12 +109,11 @@ func (out *Model) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	err = unmarshal(&tmp.RealModel)
 	if err == nil {
-		*out = Model{
-			ID:      tmp.RealModel.ID,
-			Type:    tmp.RealModel.Type,
-			Fields:  tmp.RealModel.Fields,
-			Methods: tmp.RealModel.Methods,
-		}
+		*out = NewDefaultModel()
+		out.ID = tmp.RealModel.ID
+		out.Type = tmp.RealModel.Type
+		out.Fields = tmp.RealModel.Fields
+		out.Methods = tmp.RealModel.Methods
 		return nil
 	}
 
