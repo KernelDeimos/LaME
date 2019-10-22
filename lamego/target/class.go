@@ -1,7 +1,7 @@
 package target
 
 import (
-	"github.com/KernelDeimos/LaME/lamego/model"
+	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 )
 
 type Visibility byte
@@ -39,7 +39,7 @@ type Method struct {
 	Name      string
 	Arguments []Variable
 	Return    Variable
-	Code      model.FakeBlock
+	Code      lispi.FakeBlock
 }
 
 type ClassReference string

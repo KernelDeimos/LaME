@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/KernelDeimos/LaME/lamego/model"
+	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/support"
 	"github.com/KernelDeimos/LaME/lamego/target"
 	"github.com/KernelDeimos/LaME/lamego/util"
@@ -176,7 +176,7 @@ func (object ClassGenerator) getTypeString(t target.Type) (string, bool) {
 }
 
 func (object ClassGenerator) writeFakeBlock(
-	cc target.CodeCursor, ins model.FakeBlock,
+	cc target.CodeCursor, ins lispi.FakeBlock,
 ) {
 	for _, subIns := range ins.StatementList {
 		object.writeSequenceableInstruction(cc, subIns)
@@ -185,19 +185,19 @@ func (object ClassGenerator) writeFakeBlock(
 
 func (object ClassGenerator) writeSequenceableInstruction(
 	cc target.CodeCursor,
-	ins model.SequenceableInstruction,
+	ins lispi.SequenceableInstruction,
 ) {
 	instance := object.WriteContext.ClassInstanceVariable.Get()
 	// If this type switch thing raises any questions about
 	// support for langauge definitions written in other
 	// langauges, don't worry; I have a plan.
 	switch specificIns := ins.(type) {
-	case model.Return:
+	case lispi.Return:
 		cc.StartLine()
 		defer cc.EndLine()
 		cc.AddString("return ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
-	case model.ISet:
+	case lispi.ISet:
 		cc.StartLine()
 		defer cc.EndLine()
 		cc.AddString(instance + "." + specificIns.Name +
@@ -208,22 +208,22 @@ func (object ClassGenerator) writeSequenceableInstruction(
 
 func (object ClassGenerator) writeExpressionInstruction(
 	cc target.CodeCursor,
-	ins model.ExpressionInstruction,
+	ins lispi.ExpressionInstruction,
 ) {
 	switch specificIns := ins.(type) {
-	case model.IGet:
+	case lispi.IGet:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
 		cc.AddString(instance + ".get" +
 			util.String.Capitalize(specificIns.Name) + "()")
-	case model.VGet:
+	case lispi.VGet:
 		cc.AddString(specificIns.Name)
-	case model.LiteralBool:
+	case lispi.LiteralBool:
 		str := "false"
 		if specificIns.Value {
 			str = "true"
 		}
 		cc.AddString(str)
-	case model.ISerializeJSON:
+	case lispi.ISerializeJSON:
 		// TODO: maybe replace this with a lispi statement
 		// TODO: creating this anonymous function makes me
 		//  wonder how expressions that require multiple

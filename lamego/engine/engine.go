@@ -10,13 +10,14 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/KernelDeimos/LaME/lamego/model"
+	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/parsing"
 	"github.com/KernelDeimos/LaME/lamego/target"
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
 type SyntaxFrontend interface {
-	Process(script string) ([]model.SequenceableInstruction, error)
+	Process(script string) ([]lispi.SequenceableInstruction, error)
 }
 
 type Engine struct {
@@ -172,10 +173,10 @@ func (e *Engine) GenerateDefaultClass(
 					Type: fieldType,
 				},
 				Arguments: []target.Variable{},
-				Code: model.FakeBlock{
-					StatementList: []model.SequenceableInstruction{
-						model.Return{
-							Expression: model.IGet{
+				Code: lispi.FakeBlock{
+					StatementList: []lispi.SequenceableInstruction{
+						lispi.Return{
+							Expression: lispi.IGet{
 								Name: privateName,
 							},
 						},
@@ -193,17 +194,17 @@ func (e *Engine) GenerateDefaultClass(
 						Type: fieldType,
 					},
 				},
-				Code: model.FakeBlock{
-					StatementList: []model.SequenceableInstruction{
-						model.ISet{
+				Code: lispi.FakeBlock{
+					StatementList: []lispi.SequenceableInstruction{
+						lispi.ISet{
 							Name: issetName,
-							Expression: model.LiteralBool{
+							Expression: lispi.LiteralBool{
 								Value: true,
 							},
 						},
-						model.ISet{
+						lispi.ISet{
 							Name: privateName,
-							Expression: model.VGet{
+							Expression: lispi.VGet{
 								Name: "v",
 							},
 						},
@@ -227,10 +228,10 @@ func (e *Engine) GenerateDefaultClass(
 				}
 			}
 
-			var instructions []model.SequenceableInstruction
+			var instructions []lispi.SequenceableInstruction
 			if codeSet {
-				instructions = []model.SequenceableInstruction{
-					model.Raw{
+				instructions = []lispi.SequenceableInstruction{
+					lispi.Raw{
 						Value: code,
 					},
 				}
@@ -264,7 +265,7 @@ func (e *Engine) GenerateDefaultClass(
 					),
 				},
 				Arguments: methodArgs,
-				Code: model.FakeBlock{
+				Code: lispi.FakeBlock{
 					StatementList: instructions,
 				},
 			})
@@ -277,10 +278,10 @@ func (e *Engine) GenerateDefaultClass(
 					Type: target.String,
 				},
 				Arguments: []target.Variable{},
-				Code: model.FakeBlock{
-					StatementList: []model.SequenceableInstruction{
-						model.Return{
-							Expression: model.ISerializeJSON{},
+				Code: lispi.FakeBlock{
+					StatementList: []lispi.SequenceableInstruction{
+						lispi.Return{
+							Expression: lispi.ISerializeJSON{},
 						},
 					},
 				},

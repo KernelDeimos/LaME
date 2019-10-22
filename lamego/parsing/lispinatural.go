@@ -9,19 +9,19 @@ import (
 	// since some languages do not support reflection.
 	"reflect"
 
-	"github.com/KernelDeimos/LaME/lamego/model"
+	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 )
 
 type SyntaxFrontendLisPINatural struct{}
 
 // TODO: Reports go error type; this needs to be changed before LaME can be self-hosting
-func (this SyntaxFrontendLisPINatural) Process(script string) ([]model.SequenceableInstruction, error) {
+func (this SyntaxFrontendLisPINatural) Process(script string) ([]lispi.SequenceableInstruction, error) {
 	tokens, err := ParseListSimple(script)
 	if err != nil {
 		return nil, err
 	}
 
-	output := []model.SequenceableInstruction{}
+	output := []lispi.SequenceableInstruction{}
 
 	for _, statementAsInterface := range tokens {
 		switch statement := statementAsInterface.(type) {
@@ -41,7 +41,7 @@ func (this SyntaxFrontendLisPINatural) Process(script string) ([]model.Sequencea
 
 func (this SyntaxFrontendLisPINatural) maybeProcessSequenceable(
 	statement []interface{},
-) (model.SequenceableInstruction, error) {
+) (lispi.SequenceableInstruction, error) {
 	if len(statement) < 1 {
 		return nil, errors.New("Found blank list when expecting statement")
 	}
@@ -55,7 +55,7 @@ func (this SyntaxFrontendLisPINatural) maybeProcessSequenceable(
 
 func (this SyntaxFrontendLisPINatural) maybeProcessExpression(
 	expression []interface{},
-) (model.ExpressionInstruction, error) {
+) (lispi.ExpressionInstruction, error) {
 	if len(expression) < 1 {
 		return nil, errors.New("Found blank list when expecting expression")
 	}
@@ -69,10 +69,10 @@ func (this SyntaxFrontendLisPINatural) maybeProcessExpression(
 
 func (this SyntaxFrontendLisPINatural) processSequenceable(
 	name string, args []interface{},
-) (model.SequenceableInstruction, error) {
-	validSequenceables := map[string]model.SequenceableInstruction{
-		"return": model.Return{},
-		"iset":   model.ISet{},
+) (lispi.SequenceableInstruction, error) {
+	validSequenceables := map[string]lispi.SequenceableInstruction{
+		"return": lispi.Return{},
+		"iset":   lispi.ISet{},
 	}
 
 	output, recognized := validSequenceables[name]
@@ -85,16 +85,16 @@ func (this SyntaxFrontendLisPINatural) processSequenceable(
 		return nil, err
 	}
 
-	output = reflect.ValueOf(outI).Elem().Interface().(model.SequenceableInstruction)
+	output = reflect.ValueOf(outI).Elem().Interface().(lispi.SequenceableInstruction)
 
 	return output, nil
 }
 
 func (this SyntaxFrontendLisPINatural) processExpression(
 	name string, args []interface{},
-) (model.ExpressionInstruction, error) {
-	validExpressions := map[string]model.ExpressionInstruction{
-		"iget": model.IGet{},
+) (lispi.ExpressionInstruction, error) {
+	validExpressions := map[string]lispi.ExpressionInstruction{
+		"iget": lispi.IGet{},
 	}
 
 	output, recognized := validExpressions[name]
@@ -106,7 +106,7 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 	if err != nil {
 		return nil, err
 	}
-	output = reflect.ValueOf(outI).Elem().Interface().(model.ExpressionInstruction)
+	output = reflect.ValueOf(outI).Elem().Interface().(lispi.ExpressionInstruction)
 
 	return output, nil
 }
