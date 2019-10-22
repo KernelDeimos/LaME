@@ -5,19 +5,19 @@ package models
 import "encoding/json"
 
 type Passenger struct {
-	testthing__ string
-	testthing__isSet bool
+	age__ int
+	age__isSet bool
 	name__ string
 	name__isSet bool
 	email__ string
 	email__isSet bool
 }
-func (o Passenger) getTestthing() string {
-	return o.getTestthing__()
+func (o Passenger) getAge() int {
+	return o.getAge__()
 }
-func (o Passenger) setTestthing(v string) {
-	o.testthing__isSet = true
-	o.testthing__ = v
+func (o Passenger) setAge(v int) {
+	o.age__isSet = true
+	o.age__ = v
 }
 func (o Passenger) getName() string {
 	return o.getName__()
@@ -35,6 +35,20 @@ func (o Passenger) setEmail(v string) {
 }
 func (o Passenger) toCSV() string {
 	return o.getName()
+}
+func (o Passenger) getDiscountPercent() int {
+	if o.getAge() <  12  {
+		return  100 
+	}
+	if o.getAge() <  18  {
+		return  20 
+	}
+	if o.getAge() <  24  {
+		return  10 
+	}
+	if  65  < o.getAge() {
+		return  50 
+	}
 }
 func (o Passenger) serializeJSON() string {
 	return (func() string {

@@ -21,6 +21,13 @@ func (this SyntaxFrontendLisPINatural) Process(script string) ([]lispi.Sequencea
 		return nil, err
 	}
 
+	return this.processBlock(tokens)
+}
+
+func (this SyntaxFrontendLisPINatural) processBlock(
+	tokens []interface{},
+) ([]lispi.SequenceableInstruction, error) {
+
 	output := []lispi.SequenceableInstruction{}
 
 	for _, statementAsInterface := range tokens {
@@ -45,6 +52,18 @@ func (this SyntaxFrontendLisPINatural) maybeProcessSequenceable(
 	if len(statement) < 1 {
 		return nil, errors.New("Found blank list when expecting statement")
 	}
+
+	_, isBlock := statement[0].([]interface{})
+	if isBlock {
+		stmtList, err := this.processBlock(statement)
+		if err != nil {
+			return nil, err
+		}
+		return lispi.FakeBlock{
+			StatementList: stmtList,
+		}, nil
+	}
+
 	name, ok := statement[0].(string)
 	if !ok {
 		return nil, errors.New("First token must be a string")
@@ -73,11 +92,12 @@ func (this SyntaxFrontendLisPINatural) processSequenceable(
 	validSequenceables := map[string]lispi.SequenceableInstruction{
 		"return": lispi.Return{},
 		"iset":   lispi.ISet{},
+		"if":     lispi.If{},
 	}
 
 	output, recognized := validSequenceables[name]
 	if !recognized {
-		return nil, errors.New("Expression not recognized:" + name)
+		return nil, errors.New("Sequenceable not recognized:" + name)
 	}
 
 	outI, err := this.reflectListToLisPI(reflect.TypeOf(output), args)
@@ -95,6 +115,8 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 ) (lispi.ExpressionInstruction, error) {
 	validExpressions := map[string]lispi.ExpressionInstruction{
 		"iget": lispi.IGet{},
+		"<":    lispi.Lt{},
+		"int":  lispi.LiteralInt{},
 	}
 
 	output, recognized := validExpressions[name]
@@ -122,6 +144,16 @@ func (this SyntaxFrontendLisPINatural) reflectListToLisPI(
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		switch field.Type.Name() {
+		case "SequenceableInstruction":
+			seqList, ok := (args[i]).([]interface{})
+			if !ok {
+				return nil, errors.New("Found string '" + args[i].(string) + "' when expecting list")
+			}
+			seq, err := this.maybeProcessSequenceable(seqList)
+			if err != nil {
+				return nil, err
+			}
+			reflect.ValueOf(output).Elem().Field(i).Set(reflect.ValueOf(seq))
 		case "ExpressionInstruction":
 			exprList, ok := (args[i]).([]interface{})
 			if !ok {

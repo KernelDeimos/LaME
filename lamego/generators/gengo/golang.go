@@ -192,6 +192,10 @@ func (object ClassGenerator) writeSequenceableInstruction(
 	// support for langauge definitions written in other
 	// langauges, don't worry; I have a plan.
 	switch specificIns := ins.(type) {
+	case lispi.FakeBlock:
+		for _, ins := range specificIns.StatementList {
+			object.writeSequenceableInstruction(cc, ins)
+		}
 	case lispi.Return:
 		cc.StartLine()
 		defer cc.EndLine()
@@ -203,6 +207,26 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		cc.AddString(instance + "." + specificIns.Name +
 			" = ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
+	case lispi.If:
+		cc.StartLine()
+		cc.AddString("if ")
+		object.writeExpressionInstruction(cc, specificIns.Condition)
+		cc.AddString(" {")
+		cc.EndLine()
+		cc.IncrIndent()
+		object.writeSequenceableInstruction(cc, specificIns.Code)
+		cc.DecrIndent()
+		cc.AddLine("}")
+	case lispi.While:
+		cc.StartLine()
+		cc.AddString("for ")
+		object.writeExpressionInstruction(cc, specificIns.Condition)
+		cc.AddString(" {")
+		cc.EndLine()
+		cc.IncrIndent()
+		object.writeSequenceableInstruction(cc, specificIns.Code)
+		cc.DecrIndent()
+		cc.AddLine("}")
 	}
 }
 
@@ -223,6 +247,32 @@ func (object ClassGenerator) writeExpressionInstruction(
 			str = "true"
 		}
 		cc.AddString(str)
+	case lispi.LiteralInt:
+		cc.AddString(" " + specificIns.Value + " ")
+	case lispi.And:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" && ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	case lispi.Or:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" || ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	case lispi.Lt:
+		// Note: model validator will eventually ensure
+		//       the arguments are always integer types
+		object.writeExpressionInstruction(cc, specificIns.L)
+		cc.AddString(" < ")
+		object.writeExpressionInstruction(cc, specificIns.R)
+	case lispi.LtEq:
+		// Note: model validator will eventually ensure
+		//       the arguments are always integer types
+		object.writeExpressionInstruction(cc, specificIns.L)
+		cc.AddString(" <= ")
+		object.writeExpressionInstruction(cc, specificIns.R)
+	case lispi.Not:
+		cc.AddString("!(")
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(")")
 	case lispi.ISerializeJSON:
 		// TODO: maybe replace this with a lispi statement
 		// TODO: creating this anonymous function makes me

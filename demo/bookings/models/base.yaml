@@ -1,8 +1,8 @@
 - DEFINE_MODELS
 - id: project.models.Passenger
   fields:
-  - name: testthing
-    type: string
+  - name: age
+    type: int
   - [name, string]
   - [email, string]
   methods:
@@ -11,6 +11,22 @@
     return: string
     gencode: |
       (return (iget name))
+  - name: getDiscountPercent
+    args: []
+    return: int
+    gencode: |
+      (if (< (iget age) (int 12)) (
+        (return (int 100))
+      ))
+      (if (< (iget age) (int 18)) (
+        (return (int 20))
+      ))
+      (if (< (iget age) (int 24)) (
+        (return (int 10))
+      ))
+      (if (< (int 65) (iget age)) (
+        (return (int 50))
+      ))
 - id: project.models.Booking
   fields:
   - name: passenger

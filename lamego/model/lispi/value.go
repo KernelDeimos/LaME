@@ -11,3 +11,9 @@ type LiteralString struct {
 }
 
 func (i LiteralString) AsExpressionInstruction() ExpressionInstruction { return i }
+
+type LiteralInt struct {
+	Value string
+}
+
+func (i LiteralInt) AsExpressionInstruction() ExpressionInstruction { return i }

@@ -19,7 +19,7 @@ const (
 	ParseTokenSep    = ' '
 
 	// Should be all symbols above, but excluding the secape character
-	ParseSyntaxMask = ` ()'`
+	ParseSyntaxMask = " \n\t()'"
 )
 
 type Stack struct {
