@@ -2,9 +2,11 @@ package main
 
 import (
 	// "encoding/json"
-	"os"
 
 	"github.com/sirupsen/logrus"
+
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 
 	"github.com/KernelDeimos/LaME/lamego/engine"
 	// "github.com/KernelDeimos/LaME/lamego/generators"
@@ -16,32 +18,26 @@ import (
 )
 
 func main() {
-	var modelDir string
-	var outputDir string
-	var targetLanguage string
-	{
-		args := os.Args[1:]
-		targetLanguage = args[0]
-		modelDir = args[1]
-		outputDir = args[2]
+	var config engine.EngineConfig
+	b, err := ioutil.ReadFile("LaME.yaml")
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	err = yaml.Unmarshal(b, &config)
+	if err != nil {
+		logrus.Fatal(err)
 	}
 
-	e := engine.NewEngine(engine.EngineConfig{
-		//
-	})
+	e := engine.NewEngine(config)
 	e.ClassGenerators = map[string]target.ClassGenerator{
 		"go": makeClassGeneratorGo(),
 		"js": makeClassGeneratorJs(),
 	}
 
-	err := e.Generate(engine.EngineRunConfig{
-		ModelSourceDirectory:     modelDir,
-		GeneratorOutputDirectory: outputDir,
-		TargetLanguage:           targetLanguage,
-	})
+	ee := e.RunAll()
 
-	if err != nil {
-		logrus.Fatal(err.String())
+	if ee != nil {
+		logrus.Fatal(ee.String())
 	}
 
 }

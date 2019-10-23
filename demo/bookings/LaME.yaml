@@ -1,10 +1,12 @@
 tasks:
-- target: go
+- name: Server
+  target: go
   source: models
   output: demogo
   config:
     pkgroot: github.com/KernelDeimos/LaME/demo/demogo
-- target: js
+- name: Browser
+  target: js
   source: models
   output: demojs
 

@@ -28,10 +28,15 @@ type Engine struct {
 }
 
 type EngineConfig struct {
-	Tasks map[string]EngineRunConfig
+	Tasks []EngineRunConfig
+}
+
+type EngineDelegates struct {
+	ClassGenerators map[string]target.ClassGenerator
 }
 
 type EngineRunConfig struct {
+	Name                     string            `yaml:"name"`
 	TargetLanguage           string            `yaml:"target"`
 	ModelSourceDirectory     string            `yaml:"source"`
 	GeneratorOutputDirectory string            `yaml:"output"`
@@ -57,6 +62,18 @@ type DeFactoEngineError struct {
 
 func (ee DeFactoEngineError) String() string {
 	return ee.M
+}
+
+func (e *Engine) RunAll() EngineError {
+	var err EngineError
+	for _, conf := range e.Config.Tasks {
+		fmt.Printf("[LaME] Running task: %s\n", conf.Name)
+		err = e.Generate(conf)
+		if err != nil {
+			break
+		}
+	}
+	return err
 }
 
 func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
