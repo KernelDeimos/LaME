@@ -8,10 +8,11 @@ import (
 
 	"github.com/KernelDeimos/LaME/lamego/engine"
 	// "github.com/KernelDeimos/LaME/lamego/generators"
-	"github.com/KernelDeimos/LaME/lamego/target"
 	"github.com/KernelDeimos/LaME/lamego/support"
+	"github.com/KernelDeimos/LaME/lamego/target"
 
 	"github.com/KernelDeimos/LaME/lamego/generators/gengo"
+	"github.com/KernelDeimos/LaME/lamego/generators/genjs"
 )
 
 func main() {
@@ -30,18 +31,27 @@ func main() {
 	})
 	e.ClassGenerators = map[string]target.ClassGenerator{
 		"go": makeClassGeneratorGo(),
+		"js": makeClassGeneratorJs(),
 	}
 
 	err := e.Generate(engine.EngineRunConfig{
-		ModelSourceDirectory: modelDir,
+		ModelSourceDirectory:     modelDir,
 		GeneratorOutputDirectory: outputDir,
-		TargetLanguage: targetLanguage,
+		TargetLanguage:           targetLanguage,
 	})
 
 	if err != nil {
 		logrus.Fatal(err.String())
 	}
 
+}
+
+func makeClassGeneratorJs() genjs.ClassGenerator {
+	writeContext := support.NewWriteContext()
+
+	return genjs.ClassGenerator{
+		WriteContext: writeContext,
+	}
 }
 
 func makeClassGeneratorGo() gengo.ClassGenerator {

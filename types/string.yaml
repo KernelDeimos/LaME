@@ -11,20 +11,9 @@
   methods:
   - name: validate
     args: ['value']
+    return: bool
     gencode: |
-      return
-        AND
-          (<= this.min_length (lang.string.length args.value))
-          (>= this.max_length (lang.string.length args.value))
-    hardcode:
-      javascript: |
-        function (_this, _args_value) {
-          return (_this.min_length <= _args_value.length) &&
-            (_this.max_length >= _args_value.length) }
-      go: |
-        func {{.ctx.funcname}} (_this {{.ctx.classname}}, _args_value string) bool {
-          return (_this.min_length <= len(_args_value)) &&
-            (_this.max_length <= _args_value.length)
-        }
-        # If the brace above is white, you're using the textmate syntax
-        # highlighter. It's wrong.
+      (return (and
+        (<= this.min_length (string.length (vget value)))
+        (<= (string.length (vget value)) this.max_length)
+      ))
