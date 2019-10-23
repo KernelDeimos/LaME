@@ -1,0 +1,17 @@
+- SET package=lame.generators.gengo
+- DEFINE MODELS
+- name: lame.generators.go.ClassGenerator
+  implements: ['lame.target.ClassGenerator']
+  state:
+  - name: fileStates
+    type: lame.ds.Map<string,lame.generators.go.FileState>
+  methods:
+  - name: writeClass
+    # arguments implied by interface
+    gencode: |
+      filename = s.join s.split c.Package, "."
+      cc, isNew = fm.RequestFileForCode filename
+      this.writeContext.classInstanceVariable.push("o")
+      defer this.writeContext.classInstanceVariable.unpush()
+
+      this.fileStates[filename] = new lame.generators.go.FileState

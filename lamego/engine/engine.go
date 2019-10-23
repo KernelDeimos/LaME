@@ -28,13 +28,14 @@ type Engine struct {
 }
 
 type EngineConfig struct {
-	//
+	Tasks map[string]EngineRunConfig
 }
 
 type EngineRunConfig struct {
-	TargetLanguage           string
-	ModelSourceDirectory     string
-	GeneratorOutputDirectory string
+	TargetLanguage           string            `yaml:"target"`
+	ModelSourceDirectory     string            `yaml:"source"`
+	GeneratorOutputDirectory string            `yaml:"output"`
+	GeneratorConfig          map[string]string `yaml:"config"`
 }
 
 func NewEngine(config EngineConfig) *Engine {
