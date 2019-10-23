@@ -26,8 +26,13 @@ var constructor_ = function() {
 
 type ClassGenerator struct {
 	WriteContext support.WriteContext
+	Config       map[string]string
 
 	objects map[string]struct{}
+}
+
+func (object ClassGenerator) SetConfig(config map[string]string) {
+	object.Config = config
 }
 
 func (object ClassGenerator) WriteClass(
@@ -86,7 +91,7 @@ func (object ClassGenerator) writeMethod(
 	// typ, _ := object.getTypeString(m.Return.Type)
 
 	object.open(cc, "{")
-	cc.AddLine("name: " + `"` + m.Name + `"`)
+	cc.AddLine("name: " + `"` + m.Name + `",`)
 	cc.StartLine()
 	cc.AddString("typReturn: ")
 	object.writeVariable(cc, m.Return)

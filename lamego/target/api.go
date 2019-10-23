@@ -86,25 +86,26 @@ type InnerCursorGettable interface {
 	GetString() string
 }
 
-type GettableString struct { S *string }
+type GettableString struct{ S *string }
+
 func (s GettableString) GetString() string {
 	return *(s.S)
 }
 
 type StringCodeCursor struct {
-	subCursors map[string]CodeCursor
-	gettables []InnerCursorGettable
+	subCursors  map[string]CodeCursor
+	gettables   []InnerCursorGettable
 	code        *string
 	lineStarted bool
 
 	config CursorConfig
-	indent      int
+	indent int
 }
 
 func NewStringCodeCursor(conf CursorConfig) *StringCodeCursor {
 	var initialString string
 	return &StringCodeCursor{
-		config: conf,
+		config:     conf,
 		subCursors: map[string]CodeCursor{},
 		gettables: []InnerCursorGettable{
 			GettableString{S: &initialString},
@@ -184,6 +185,7 @@ func (cc *StringCodeCursor) GetSubCursor(name string) CodeCursor {
 }
 
 type ClassGenerator interface {
+	SetConfig(config map[string]string)
 	WriteClass(cls Class, fm FileManager)
 	EndFile(path string, fm FileManager)
 }

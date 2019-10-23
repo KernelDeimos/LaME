@@ -2,7 +2,10 @@
 
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/KernelDeimos/LaME/demo/demogo/models"
+)
 
 type Passenger struct {
 	age__ int
@@ -12,31 +15,31 @@ type Passenger struct {
 	email__ string
 	email__isSet bool
 }
-func (o Passenger) getAge() int {
+func (o *Passenger) getAge() int {
 	return o.getAge__()
 }
-func (o Passenger) setAge(v int) {
+func (o *Passenger) setAge(v int) {
 	o.age__isSet = true
 	o.age__ = v
 }
-func (o Passenger) getName() string {
+func (o *Passenger) getName() string {
 	return o.getName__()
 }
-func (o Passenger) setName(v string) {
+func (o *Passenger) setName(v string) {
 	o.name__isSet = true
 	o.name__ = v
 }
-func (o Passenger) getEmail() string {
+func (o *Passenger) getEmail() string {
 	return o.getEmail__()
 }
-func (o Passenger) setEmail(v string) {
+func (o *Passenger) setEmail(v string) {
 	o.email__isSet = true
 	o.email__ = v
 }
-func (o Passenger) toCSV() string {
+func (o *Passenger) toCSV() string {
 	return o.getName()
 }
-func (o Passenger) getDiscountPercent() int {
+func (o *Passenger) getDiscountPercent() int {
 	if o.getAge() <  12  {
 		return  100 
 	}
@@ -50,7 +53,7 @@ func (o Passenger) getDiscountPercent() int {
 		return  50 
 	}
 }
-func (o Passenger) serializeJSON() string {
+func (o *Passenger) serializeJSON() string {
 	return (func() string {
 		bout, err := json.Marshal(o)
 		if err != nil { return "" }
@@ -58,26 +61,26 @@ func (o Passenger) serializeJSON() string {
 	})()
 }
 type Booking struct {
-	passenger__ project.models.Passenger
+	passenger__ Passenger
 	passenger__isSet bool
 	notes__ string
 	notes__isSet bool
 }
-func (o Booking) getPassenger() project.models.Passenger {
+func (o *Booking) getPassenger() Passenger {
 	return o.getPassenger__()
 }
-func (o Booking) setPassenger(v project.models.Passenger) {
+func (o *Booking) setPassenger(v Passenger) {
 	o.passenger__isSet = true
 	o.passenger__ = v
 }
-func (o Booking) getNotes() string {
+func (o *Booking) getNotes() string {
 	return o.getNotes__()
 }
-func (o Booking) setNotes(v string) {
+func (o *Booking) setNotes(v string) {
 	o.notes__isSet = true
 	o.notes__ = v
 }
-func (o Booking) serializeJSON() string {
+func (o *Booking) serializeJSON() string {
 	return (func() string {
 		bout, err := json.Marshal(o)
 		if err != nil { return "" }

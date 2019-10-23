@@ -113,6 +113,7 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 	if !exists {
 		return DeFactoEngineError{M: "Unrecognized target language"}
 	}
+	cg.SetConfig(runConfig.GeneratorConfig)
 
 	for i := 0; i < len(allModels); i++ {
 		m := allModels[i]

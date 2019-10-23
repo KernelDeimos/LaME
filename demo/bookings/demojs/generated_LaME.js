@@ -22,14 +22,14 @@ project.models.Passenger.fields = [
 ];
 project.models.Passenger.methods = [
 	{
-		name: "getAge"
+		name: "getAge",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"int"}},
 		jsFunction: function () {
 			return this.getAge__();
 		},
 	},
 	{
-		name: "setAge"
+		name: "setAge",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"void"}},
 		jsFunction: function (v) {
 			this.age__isSet = true
@@ -37,14 +37,14 @@ project.models.Passenger.methods = [
 		},
 	},
 	{
-		name: "getName"
+		name: "getName",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
 			return this.getName__();
 		},
 	},
 	{
-		name: "setName"
+		name: "setName",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"void"}},
 		jsFunction: function (v) {
 			this.name__isSet = true
@@ -52,14 +52,14 @@ project.models.Passenger.methods = [
 		},
 	},
 	{
-		name: "getEmail"
+		name: "getEmail",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
 			return this.getEmail__();
 		},
 	},
 	{
-		name: "setEmail"
+		name: "setEmail",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"void"}},
 		jsFunction: function (v) {
 			this.email__isSet = true
@@ -67,14 +67,14 @@ project.models.Passenger.methods = [
 		},
 	},
 	{
-		name: "toCSV"
+		name: "toCSV",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
 			return this.getName();
 		},
 	},
 	{
-		name: "getDiscountPercent"
+		name: "getDiscountPercent",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"int"}},
 		jsFunction: function () {
 			if ( this.getAge() <  12  ) {
@@ -92,7 +92,7 @@ project.models.Passenger.methods = [
 		},
 	},
 	{
-		name: "serializeJSON"
+		name: "serializeJSON",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
 			return JSON.stringify(this);
@@ -109,14 +109,14 @@ project.models.Booking.fields = [
 ];
 project.models.Booking.methods = [
 	{
-		name: "getPassenger"
+		name: "getPassenger",
 		typReturn: {"name":"","type":{"TypeOfType":108,"Identifier":"project.models.Passenger"}},
 		jsFunction: function () {
 			return this.getPassenger__();
 		},
 	},
 	{
-		name: "setPassenger"
+		name: "setPassenger",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"void"}},
 		jsFunction: function (v) {
 			this.passenger__isSet = true
@@ -124,14 +124,14 @@ project.models.Booking.methods = [
 		},
 	},
 	{
-		name: "getNotes"
+		name: "getNotes",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
 			return this.getNotes__();
 		},
 	},
 	{
-		name: "setNotes"
+		name: "setNotes",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"void"}},
 		jsFunction: function (v) {
 			this.notes__isSet = true
@@ -139,7 +139,7 @@ project.models.Booking.methods = [
 		},
 	},
 	{
-		name: "serializeJSON"
+		name: "serializeJSON",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
 			return JSON.stringify(this);

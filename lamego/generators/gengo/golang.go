@@ -10,8 +10,8 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
-var MethodHeaderExpression = "func (o %s) %s(%s) %s"
-var MethodHeaderVoid = "func (o %s) %s(%s)"
+var MethodHeaderExpression = "func (o *%s) %s(%s) %s"
+var MethodHeaderVoid = "func (o *%s) %s(%s)"
 
 type FileState struct {
 	imports map[string]struct{}
@@ -25,10 +25,15 @@ func init() {
 
 type ClassGenerator struct {
 	WriteContext support.WriteContext
+	Config       map[string]string
 }
 
-func (object ClassGenerator) asClass_lame_core_ClassGenerator() target.ClassGenerator {
+func (object *ClassGenerator) asClass_lame_core_ClassGenerator() target.ClassGenerator {
 	return object
+}
+
+func (object *ClassGenerator) SetConfig(config map[string]string) {
+	object.Config = config
 }
 
 func (object ClassGenerator) WriteClass(
@@ -79,7 +84,8 @@ func (object ClassGenerator) WriteClass(
 		cc.IncrIndent()
 		defer cc.DecrIndent()
 		for _, v := range c.Variables {
-			typ, isVoid := object.getTypeString(v.Type)
+			typ, isVoid := object.getTypeString(
+				filestate, v.Type)
 			if isVoid {
 				// TODO: this is a user error
 			}
@@ -91,7 +97,7 @@ func (object ClassGenerator) WriteClass(
 	cc.AddLine("}")
 
 	for _, m := range c.Methods {
-		object.writeMethod(c, cc, m)
+		object.writeMethod(c, cc, m, filestate)
 	}
 
 }
@@ -129,8 +135,9 @@ func (object ClassGenerator) EndFile(
 
 func (object ClassGenerator) writeMethod(
 	c target.Class, cc target.CodeCursor, m target.Method,
+	filestate *FileState,
 ) {
-	typ, isVoid := object.getTypeString(m.Return.Type)
+	typ, isVoid := object.getTypeString(filestate, m.Return.Type)
 
 	// Write the argument string
 	var argString string
@@ -138,7 +145,7 @@ func (object ClassGenerator) writeMethod(
 		argslice := []string{}
 		for _, v := range m.Arguments {
 			argType, argTypeIsVoid :=
-				object.getTypeString(v.Type)
+				object.getTypeString(filestate, v.Type)
 			if argTypeIsVoid {
 				// TODO: this is a user error
 			}
@@ -167,10 +174,23 @@ func (object ClassGenerator) writeMethod(
 	object.writeFakeBlock(cc, m.Code)
 }
 
-func (object ClassGenerator) getTypeString(t target.Type) (string, bool) {
+func (object ClassGenerator) getTypeString(filestate *FileState, t target.Type) (string, bool) {
 	if t.TypeOfType == target.PrimitiveType &&
 		t.Identifier == target.PrimitiveVoid {
 		return "", true
+	}
+	parts := strings.Split(t.Identifier, ".")
+	if len(parts) < 1 {
+		return "", true
+	}
+	// Special package "project"
+	if parts[0] == "project" {
+		importName := object.Config["pkgroot"]
+		if len(parts) > 2 {
+			importName += "/" + strings.Join(parts[1:len(parts)-1], "/")
+		}
+		filestate.imports[importName] = struct{}{}
+		return parts[len(parts)-1], false
 	}
 	return t.Identifier, false
 }

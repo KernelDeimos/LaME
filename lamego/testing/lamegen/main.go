@@ -50,10 +50,10 @@ func makeClassGeneratorJs() genjs.ClassGenerator {
 	}
 }
 
-func makeClassGeneratorGo() gengo.ClassGenerator {
+func makeClassGeneratorGo() *gengo.ClassGenerator {
 	writeContext := support.NewWriteContext()
 
-	return gengo.ClassGenerator{
+	return &gengo.ClassGenerator{
 		WriteContext: writeContext,
 	}
 }
