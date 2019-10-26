@@ -20,12 +20,49 @@ type SyntaxFrontend interface {
 	Process(script string) ([]lispi.SequenceableInstruction, error)
 }
 
+//::run : apis (store 'model reader' 'model producer' 'class reader' 'class producer' 'code producer')
+//::end
+
 type Engine struct {
 	Config          EngineConfig
 	SyntaxFrontends map[string]SyntaxFrontend
 	ClassGenerators map[string]target.ClassGenerator
-	TargetLanguage  string
+	//::gen repcsv '$ucc-1s []$ucc-1' (apis)
+	ModelReaders   []ModelReader
+	ModelProducers []ModelProducer
+	ClassReaders   []ClassReader
+	ClassProducers []ClassProducer
+	CodeProducers  []CodeProducer
+	//::end
+	TargetLanguage string
 }
+
+/*
+//::run : api-setter (store (join-lf (DATA)))
+func (e *Engine) Install$ucc-1($lcc-1 $ucc-1) {
+	e.$ucc-1s = append(e.$ucc-1s, $lcc-1)
+}
+//::end
+*/
+
+//::gen repcsv (api-setter) (apis)
+func (e *Engine) InstallModelReader(modelReader ModelReader) {
+	e.ModelReaders = append(e.ModelReaders, modelReader)
+}
+func (e *Engine) InstallModelProducer(modelProducer ModelProducer) {
+	e.ModelProducers = append(e.ModelProducers, modelProducer)
+}
+func (e *Engine) InstallClassReader(classReader ClassReader) {
+	e.ClassReaders = append(e.ClassReaders, classReader)
+}
+func (e *Engine) InstallClassProducer(classProducer ClassProducer) {
+	e.ClassProducers = append(e.ClassProducers, classProducer)
+}
+func (e *Engine) InstallCodeProducer(codeProducer CodeProducer) {
+	e.CodeProducers = append(e.CodeProducers, codeProducer)
+}
+
+//::end
 
 type EngineConfig struct {
 	Tasks []EngineRunConfig
