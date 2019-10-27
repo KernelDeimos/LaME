@@ -136,15 +136,15 @@ type EngineDelegates struct {
 }
 
 type EngineRunConfig struct {
-	Name                     string                 `yaml:"name"`
-	TargetLanguage           string                 `yaml:"target"`
-	ModelSourceDirectory     string                 `yaml:"source"`
-	GeneratorOutputDirectory string                 `yaml:"output"`
-	PluginConfig             map[string]interface{} `yaml:"config"`
+	Name                     string                            `yaml:"name"`
+	TargetLanguage           string                            `yaml:"target"`
+	ModelSourceDirectory     string                            `yaml:"source"`
+	GeneratorOutputDirectory string                            `yaml:"output"`
+	PluginConfig             map[string]map[string]interface{} `yaml:"config"`
 }
 
 func (conf EngineRunConfig) GetConfig(name string) string {
-	b, err := json.Marshal(conf.PluginConfig)
+	b, err := json.Marshal(conf.PluginConfig[name])
 	if err != nil {
 		panic(err)
 	}

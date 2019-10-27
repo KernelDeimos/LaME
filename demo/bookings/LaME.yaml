@@ -4,7 +4,8 @@ tasks:
   source: models
   output: demogo
   config:
-    pkgroot: github.com/KernelDeimos/LaME/demo/demogo
+    language.go:
+        pkgroot: github.com/KernelDeimos/LaME/demo/demogo
 - name: Browser
   target: js
   source: models
