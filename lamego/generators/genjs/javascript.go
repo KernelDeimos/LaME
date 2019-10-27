@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/KernelDeimos/LaME/lamego/engine"
+	"github.com/KernelDeimos/LaME/lamego/engine/pluginapi"
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/support"
 	"github.com/KernelDeimos/LaME/lamego/target"
@@ -25,14 +27,36 @@ var constructor_ = function() {
 `
 
 type ClassGenerator struct {
+	pluginapi.AbstractCodeGenerator
+
 	WriteContext support.WriteContext
 	Config       map[string]string
 
 	objects map[string]struct{}
 }
 
-func (object ClassGenerator) SetConfig(config map[string]string) {
-	object.Config = config
+func (object *ClassGenerator) Install(api engine.EngineAPI) {
+	api.InstallClassReader(object)
+	api.InstallCodeProducer(object)
+	api.InstallConfigurable(object)
+}
+
+func (object *ClassGenerator) InvokeCodeGeneration() []engine.CodeGenerationError {
+	for _, c := range object.ClassesToGenerate {
+		object.WriteClass(c, object.CodeProducerAPI.GetFileManager())
+	}
+	return nil
+}
+
+func (object *ClassGenerator) SetConfig(
+	provider engine.ConfigurationProvider,
+) *engine.ConfigurationError {
+	config := provider.GetConfig("language.js")
+	err := json.Unmarshal([]byte(config), &object.Config)
+	if err != nil {
+		return &engine.ConfigurationError{M: err.Error()}
+	}
+	return nil
 }
 
 func (object ClassGenerator) WriteClass(

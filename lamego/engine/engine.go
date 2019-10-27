@@ -1,11 +1,12 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/yaml.v2"
 
@@ -13,14 +14,38 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/parsing"
 	"github.com/KernelDeimos/LaME/lamego/target"
-	"github.com/KernelDeimos/LaME/lamego/util"
 )
+
+func ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
+	if tIn.Primitive == model.PrimitiveLaME {
+		tOut.TypeOfType = target.LaMEType
+		tOut.Identifier = tIn.Identifier
+		return
+	}
+
+	tOut.TypeOfType = target.PrimitiveType
+
+	m := map[model.Primitive]string{
+		model.PrimitiveString: target.PrimitiveString,
+		model.PrimitiveBool:   target.PrimitiveBool,
+		model.PrimitiveInt:    target.PrimitiveInt,
+		model.PrimitiveFloat:  target.PrimitiveFloat,
+		model.PrimitiveObject: target.PrimitiveObject,
+		model.PrimitiveVoid:   target.PrimitiveVoid,
+	}
+
+	tOut.Identifier = m[tIn.Primitive]
+	return
+}
 
 type SyntaxFrontend interface {
 	Process(script string) ([]lispi.SequenceableInstruction, error)
 }
 
 //::run : apis (store 'model reader' 'model producer' 'class reader' 'class producer' 'code producer')
+//::end
+
+//::run : readers (store model,model.Model class,target.Class)
 //::end
 
 type Engine struct {
@@ -34,7 +59,19 @@ type Engine struct {
 	ClassProducers []ClassProducer
 	CodeProducers  []CodeProducer
 	//::end
+	Configurables []Configurable
+	UtilityUsers  []UtilityUser
+	//::gen repcsv 'runtime$ucc-1List []$2' (readers)
+	runtimeModelList []model.Model
+	runtimeClassList []target.Class
+	//::end
 	TargetLanguage string
+
+	fm target.FileManager
+}
+
+func (e *Engine) GetFileManager() target.FileManager {
+	return e.fm
 }
 
 /*
@@ -64,6 +101,32 @@ func (e *Engine) InstallCodeProducer(codeProducer CodeProducer) {
 
 //::end
 
+func (e *Engine) InstallConfigurable(configurable Configurable) {
+	e.Configurables = append(e.Configurables, configurable)
+}
+
+func (e *Engine) InstallUtilityUser(user UtilityUser) {
+	e.UtilityUsers = append(e.UtilityUsers, user)
+}
+
+/*
+//::run : thing-adder (store (join-lf (DATA)))
+func (e *Engine) Add$ucc-1($1 $2) {
+	e.runtime$ucc-1List = append(e.runtime$ucc-1List, $1)
+}
+//::end
+*/
+
+//::gen repcsv (thing-adder) (readers)
+func (e *Engine) AddModel(model model.Model) {
+	e.runtimeModelList = append(e.runtimeModelList, model)
+}
+func (e *Engine) AddClass(class target.Class) {
+	e.runtimeClassList = append(e.runtimeClassList, class)
+}
+
+//::end
+
 type EngineConfig struct {
 	Tasks []EngineRunConfig
 }
@@ -73,11 +136,19 @@ type EngineDelegates struct {
 }
 
 type EngineRunConfig struct {
-	Name                     string            `yaml:"name"`
-	TargetLanguage           string            `yaml:"target"`
-	ModelSourceDirectory     string            `yaml:"source"`
-	GeneratorOutputDirectory string            `yaml:"output"`
-	GeneratorConfig          map[string]string `yaml:"config"`
+	Name                     string                 `yaml:"name"`
+	TargetLanguage           string                 `yaml:"target"`
+	ModelSourceDirectory     string                 `yaml:"source"`
+	GeneratorOutputDirectory string                 `yaml:"output"`
+	PluginConfig             map[string]interface{} `yaml:"config"`
+}
+
+func (conf EngineRunConfig) GetConfig(name string) string {
+	b, err := json.Marshal(conf.PluginConfig)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }
 
 func NewEngine(config EngineConfig) *Engine {
@@ -145,207 +216,77 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 		},
 	)
 
-	// Get the expected ClassGenerator
-	cg, exists := e.ClassGenerators[runConfig.TargetLanguage]
-	if !exists {
-		return DeFactoEngineError{M: "Unrecognized target language"}
-	}
-	cg.SetConfig(runConfig.GeneratorConfig)
+	e.fm = fm
 
-	for i := 0; i < len(allModels); i++ {
-		m := allModels[i]
-		c := e.GenerateDefaultClass(m, runConfig)
-		cg.WriteClass(c, fm)
+	e.runtimeModelList = allModels
+
+	// Configure plugins
+	utilities := UtilityPackage{
+		SyntaxFrontends: e.SyntaxFrontends,
+	}
+	for _, c := range e.Configurables {
+		c.SetConfig(runConfig)
+	}
+	for _, u := range e.UtilityUsers {
+		u.SetUtilities(utilities)
+	}
+
+	for _, p := range e.ModelProducers {
+		p.SetModelReader(e)
+	}
+	for _, p := range e.ClassProducers {
+		p.SetClassReader(e)
+	}
+
+	for i := 0; true; i++ {
+		logrus.Infof("Invoking model producers (round %d)", i)
+		for _, p := range e.ModelProducers {
+			if p != nil {
+				panic("todo")
+			}
+		}
+		if len(e.runtimeModelList) < 1 {
+			break
+		}
+		logrus.Infof("Feeding model readers (round %d)", i)
+		for _, m := range e.runtimeModelList {
+			for _, r := range e.ModelReaders {
+				r.AddModel(m)
+			}
+		}
+		e.runtimeModelList = []model.Model{}
+	}
+
+	e.runtimeClassList = []target.Class{}
+	for i := 0; true; i++ {
+		logrus.Infof("Invoking class producers (round %d)", i)
+		for _, p := range e.ClassProducers {
+			p.InvokeClasses()
+		}
+		if len(e.runtimeClassList) < 1 {
+			break
+		}
+		logrus.Infof("Feeding class readers (round %d)", i)
+		for _, c := range e.runtimeClassList {
+			for _, r := range e.ClassReaders {
+				r.AddClass(c)
+			}
+		}
+		e.runtimeClassList = []target.Class{}
+	}
+
+	logrus.Infof("Invoking code producers")
+	for _, p := range e.CodeProducers {
+		p.SetAPI(e)
+		p.InvokeCodeGeneration()
 	}
 
 	for _, filename := range fm.GetFiles() {
-		cg.EndFile(filename, fm)
+		for _, p := range e.CodeProducers {
+			p.EndFile(filename, fm)
+		}
 	}
 
 	fm.FlushAll()
 	return nil
-}
-
-func (e *Engine) ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
-	if tIn.Primitive == model.PrimitiveLaME {
-		tOut.TypeOfType = target.LaMEType
-		tOut.Identifier = tIn.Identifier
-		return
-	}
-
-	tOut.TypeOfType = target.PrimitiveType
-
-	m := map[model.Primitive]string{
-		model.PrimitiveString: target.PrimitiveString,
-		model.PrimitiveBool:   target.PrimitiveBool,
-		model.PrimitiveInt:    target.PrimitiveInt,
-		model.PrimitiveFloat:  target.PrimitiveFloat,
-		model.PrimitiveObject: target.PrimitiveObject,
-		model.PrimitiveVoid:   target.PrimitiveVoid,
-	}
-
-	tOut.Identifier = m[tIn.Primitive]
-	return
-}
-
-func (e *Engine) GenerateDefaultClass(
-	m model.Model, runConfig EngineRunConfig) target.Class {
-	// Get name & package from model ID
-	c := target.Class{}
-	{
-		var pkgName, name string
-		{
-			idParts := strings.Split(m.ID, ".")
-			l := len(idParts) - 1
-			name = idParts[l]
-			pkgName = strings.Join(idParts[:l], ".")
-		}
-		c.Name = name
-		c.Package = pkgName
-		c.Meta = target.ClassMeta{
-			Serialize: target.SerializeMeta{
-				JSON: true,
-			},
-		}
-
-		c.Variables = []target.Variable{}
-		c.Methods = []target.Method{}
-
-		for _, f := range m.Fields {
-			fieldType := e.ModelTypeToTargetType(f.GetTypeObject())
-			privateName := f.Name + "__"
-			issetName := privateName + "isSet"
-			c.Variables = append(c.Variables, target.Variable{
-				Name: privateName,
-				Type: fieldType,
-			})
-			c.Variables = append(c.Variables, target.Variable{
-				Name: issetName,
-				Type: target.Bool,
-			})
-			c.Methods = append(c.Methods, target.Method{
-				Name: "get" + util.String.Capitalize(f.Name),
-				Return: target.Variable{
-					Type: fieldType,
-				},
-				Arguments: []target.Variable{},
-				Code: lispi.FakeBlock{
-					StatementList: []lispi.SequenceableInstruction{
-						lispi.Return{
-							Expression: lispi.IGet{
-								Name: privateName,
-							},
-						},
-					},
-				},
-			})
-			c.Methods = append(c.Methods, target.Method{
-				Name: "set" + util.String.Capitalize(f.Name),
-				Return: target.Variable{
-					Type: target.Void,
-				},
-				Arguments: []target.Variable{
-					target.Variable{
-						Name: "v",
-						Type: fieldType,
-					},
-				},
-				Code: lispi.FakeBlock{
-					StatementList: []lispi.SequenceableInstruction{
-						lispi.ISet{
-							Name: issetName,
-							Expression: lispi.LiteralBool{
-								Value: true,
-							},
-						},
-						lispi.ISet{
-							Name: privateName,
-							Expression: lispi.VGet{
-								Name: "v",
-							},
-						},
-					},
-				},
-			})
-		}
-
-		for _, me := range m.Methods {
-			// TODO: throws panic on unrecognized syntax frontend
-			sf := e.SyntaxFrontends[m.Meta.GencodeSyntaxFrontend]
-
-			var code string
-			var codeSet bool
-
-			// Prioritize language-targeted code
-			for lang, thisCode := range me.Hardcode {
-				if lang == runConfig.TargetLanguage {
-					code = thisCode
-					codeSet = true
-				}
-			}
-
-			var instructions []lispi.SequenceableInstruction
-			if codeSet {
-				instructions = []lispi.SequenceableInstruction{
-					lispi.Raw{
-						Value: code,
-					},
-				}
-			} else {
-				var err error
-				if sf == nil {
-					fmt.Println(e.SyntaxFrontends)
-					fmt.Println(m.Meta.GencodeSyntaxFrontend)
-				}
-				instructions, err = sf.Process(me.Gencode)
-				if err != nil {
-					panic(err) // TODO
-				}
-			}
-
-			methodArgs := []target.Variable{}
-			for _, arg := range me.Args {
-				methodArgs = append(methodArgs, target.Variable{
-					Name: arg.Name,
-					Type: e.ModelTypeToTargetType(
-						model.GetTypeObject(arg.Type),
-					),
-				})
-			}
-
-			c.Methods = append(c.Methods, target.Method{
-				Name: me.Name,
-				Return: target.Variable{
-					Type: e.ModelTypeToTargetType(
-						model.GetTypeObject(me.Return),
-					),
-				},
-				Arguments: methodArgs,
-				Code: lispi.FakeBlock{
-					StatementList: instructions,
-				},
-			})
-		}
-
-		if c.Meta.Serialize.JSON {
-			c.Methods = append(c.Methods, target.Method{
-				Name: "serializeJSON",
-				Return: target.Variable{
-					Type: target.String,
-				},
-				Arguments: []target.Variable{},
-				Code: lispi.FakeBlock{
-					StatementList: []lispi.SequenceableInstruction{
-						lispi.Return{
-							Expression: lispi.ISerializeJSON{},
-						},
-					},
-				},
-			})
-		}
-	}
-
-	return c
-	// What next?: Add variables | Add methods | Add getters/settings
-
 }
