@@ -65,13 +65,25 @@ type Engine struct {
 	runtimeModelList []model.Model
 	runtimeClassList []target.Class
 	//::end
-	TargetLanguage string
+	// maps [class id][method name][variable name] -> target.Variable
+	runtimeTypeMaps map[string]map[string]map[string]target.Type
+	TargetLanguage  string
 
 	fm target.FileManager
 }
 
 func (e *Engine) GetFileManager() target.FileManager {
 	return e.fm
+}
+
+func (e *Engine) GetTypeMap(
+	classID, methodName string) map[string]target.Type {
+	// TODO: error handle
+	return e.runtimeTypeMaps[classID][methodName]
+}
+
+type TypeValidationError struct {
+	M string
 }
 
 /*
@@ -265,6 +277,10 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 		}
 		if len(e.runtimeClassList) < 1 {
 			break
+		}
+		// FINDME: update runtime type map
+		for _, c := range e.runtimeClassList {
+			e.GenerateTypeMaps(c)
 		}
 		logrus.Infof("Feeding class readers (round %d)", i)
 		for _, c := range e.runtimeClassList {

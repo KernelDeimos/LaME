@@ -21,3 +21,8 @@ var String Type = Type{
 	TypeOfType: PrimitiveType,
 	Identifier: PrimitiveString,
 }
+
+var Int Type = Type{
+	TypeOfType: PrimitiveType,
+	Identifier: PrimitiveInt,
+}

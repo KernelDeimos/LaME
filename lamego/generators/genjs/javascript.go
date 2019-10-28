@@ -33,12 +33,16 @@ type ClassGenerator struct {
 	Config       map[string]string
 
 	objects map[string]struct{}
+
+	writtenObjects map[string]struct{}
 }
 
 func (object *ClassGenerator) Install(api engine.EngineAPI) {
 	api.InstallClassReader(object)
 	api.InstallCodeProducer(object)
 	api.InstallConfigurable(object)
+
+	object.writtenObjects = map[string]struct{}{}
 }
 
 func (object *ClassGenerator) InvokeCodeGeneration() []engine.CodeGenerationError {
@@ -69,8 +73,28 @@ func (object ClassGenerator) WriteClass(
 	if isNew {
 		object.objects = map[string]struct{}{}
 		cc.AddLine("// GENERATED CODE - changes to this file may be overwritten")
-		cc.AddLine("var project = {};")
 		cc.AddLine(constructorFunction)
+		// cc.AddLine("var project = {};")
+		// object.writtenObjects["project"] = struct{}{}
+	}
+
+	// Check if object exists (Javascript won't create parent objects implicitly)
+	if _, exists := object.writtenObjects[c.Package]; !exists {
+		parts := strings.Split(c.Package, ".")
+
+		for i := range parts {
+			path := strings.Join(parts[:i+1], ".")
+			if _, subExists := object.writtenObjects[path]; subExists {
+				continue
+			}
+			cc.StartLine()
+			if i == 0 {
+				cc.AddString("var ")
+			}
+			object.writtenObjects[path] = struct{}{}
+			cc.AddString(path + " = {}; // package path")
+			cc.EndLine()
+		}
 	}
 
 	cname := c.Package + "." + c.Name
@@ -94,7 +118,7 @@ func (object ClassGenerator) WriteClass(
 	}
 	object.close(cc, "],", 1)
 
-	cc.AddLine(cname + ".create = constructor_.bind(cname);")
+	cc.AddLine(cname + ".create = constructor_.bind(" + cname + ");")
 }
 
 func (object ClassGenerator) open(cc target.CodeCursor, txt string) {

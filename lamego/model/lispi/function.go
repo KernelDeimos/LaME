@@ -17,6 +17,13 @@ type Return struct {
 
 func (i Return) AsSequenceableInstruction() SequenceableInstruction { return i }
 
+type VSet struct {
+	Name       string
+	Expression ExpressionInstruction
+}
+
+func (i VSet) AsSequenceableInstruction() SequenceableInstruction { return i }
+
 type VGet struct {
 	Name string
 }

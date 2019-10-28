@@ -1,0 +1,34 @@
+- DEFINE_MODELS
+- id: l.string
+  type: library
+  methods:
+  - name: indexOf
+    args:
+    - [subject,string]
+    - [substr,string]
+    return: int
+    gencode: |
+      (vset lensubject (strlen (vget subject)))
+      (vset lensubstr (strlen (vget substr)))
+      (if (== (vget lensubject) 0)
+        (
+          (return (int 0))
+        ))
+      (if (< (vget lensubject) (vget lensubstr))
+        (
+          (return false)
+        ))
+      (vset i (int 0))
+      (vset e (+ (int 1) (- (vget i) (vget lensubstr))))
+      (while (< (vget i) (vget e))
+        (
+          (vset testval
+            (strsub (vget subject) (vget i)
+              (+ (vget i) (vget lensubstr))))
+          (if (== (vget testval) (vget substr))
+            (
+              (return (vget i))
+            ))
+        ))
+      (return (int -1))
+      
