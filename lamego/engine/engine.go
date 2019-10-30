@@ -83,7 +83,9 @@ func (e *Engine) GetTypeMap(
 }
 
 type TypeValidationError struct {
-	M string
+	SourceClass  *target.Class
+	SourceMethod *target.Method
+	M            string
 }
 
 /*
@@ -280,7 +282,19 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 		}
 		// FINDME: update runtime type map
 		for _, c := range e.runtimeClassList {
-			e.GenerateTypeMaps(c)
+			errs := e.GenerateTypeMaps(c)
+			if errs != nil && len(errs) > 0 {
+				for _, thisErr := range errs {
+					logrus.WithFields(logrus.Fields{
+						"package": (*thisErr.SourceClass).Package,
+						"class":   (*thisErr.SourceClass).Name,
+						"method":  (*thisErr.SourceMethod).Name,
+					}).Error(
+						thisErr.M,
+					)
+				}
+				logrus.Fatal("Halted with errors")
+			}
 		}
 		logrus.Infof("Feeding class readers (round %d)", i)
 		for _, c := range e.runtimeClassList {

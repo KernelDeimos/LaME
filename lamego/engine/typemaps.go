@@ -3,15 +3,16 @@ package engine
 import (
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/target"
+	// "github.com/sirupsen/logrus"
 )
 
 func (e *Engine) GenerateTypeMaps(c target.Class) []TypeValidationError {
-	classID := c.Package + "." + c.Name
 	errs := []TypeValidationError{}
 	for _, m := range c.Methods {
 		methodVars := map[string]target.Type{}
 		e.genTypesForSequenceable(c, m, &methodVars, &errs, m.Code)
 	}
+	return errs
 }
 
 func (e *Engine) genTypesForSequenceable(
@@ -21,13 +22,21 @@ func (e *Engine) genTypesForSequenceable(
 	ins lispi.SequenceableInstruction,
 ) {
 	switch specificIns := ins.(type) {
+	case lispi.FakeBlock:
+		for _, subIns := range specificIns.StatementList {
+			e.genTypesForSequenceable(c, m, vars, errs, subIns)
+		}
 	case lispi.Return:
 		t := e.getTypeForExpression(
 			c, m, vars, errs, specificIns.Expression)
 		if t.TypeOfType != m.Return.Type.TypeOfType ||
 			t.Identifier != m.Return.Type.Identifier {
 			*errs = append(*errs, TypeValidationError{
-				M: "return type mismatch",
+				M: "return type mismatch; " +
+					"expected " + m.Return.Type.Identifier +
+					" but got " + t.Identifier,
+				SourceClass:  &c,
+				SourceMethod: &m,
 				// TODO: details
 			})
 		}
@@ -46,6 +55,8 @@ func (e *Engine) genTypesForSequenceable(
 		} else {
 			(*vars)[specificIns.Name] = t
 		}
+	default:
+		// logrus.Warn(ins)
 	}
 }
 
@@ -80,6 +91,9 @@ func (e *Engine) getTypeForExpression(
 			})
 			return target.Void
 		}
+		return typ
+	case lispi.ISerializeJSON:
+		return target.String
 	}
 	// by default, generate void type for expression to produce error
 	return target.Void
