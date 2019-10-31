@@ -37,6 +37,7 @@ func (object *ClassGenerator) Install(api engine.EngineAPI) {
 	api.InstallClassReader(object)
 	api.InstallCodeProducer(object)
 	api.InstallConfigurable(object)
+	api.InstallRuntimeIntelligenceUser(object)
 }
 
 func (object *ClassGenerator) InvokeCodeGeneration() []engine.CodeGenerationError {
@@ -160,6 +161,9 @@ func (object ClassGenerator) writeMethod(
 ) {
 	typ, isVoid := object.getTypeString(filestate, m.Return.Type)
 
+	// used to skip arguments in variable declaration
+	argNames := []string{}
+
 	// Write the argument string
 	var argString string
 	{
@@ -172,6 +176,7 @@ func (object ClassGenerator) writeMethod(
 			}
 			argslice = append(argslice,
 				v.Name+" "+argType)
+			argNames = append(argNames, v.Name)
 		}
 		argString = strings.Join(argslice, ",")
 	}
@@ -189,7 +194,20 @@ func (object ClassGenerator) writeMethod(
 	}
 	defer cc.AddLine("}")
 
+	// Write variable declarations
+	vars := object.RuntimeIntelligenceProvider.GetTypeMap(
+		c.Package, c.Name, m.Name)
+
 	cc.IncrIndent()
+
+	fmt.Println(c.Package, c.Name, m.Name)
+	fmt.Println(vars)
+	for name, typ := range vars {
+		// TODO: typ.Identifier should not be used like this
+		cc.AddLine("var " + name + " " + typ.Identifier)
+	}
+	cc.AddLine("")
+
 	defer cc.DecrIndent()
 
 	object.writeFakeBlock(cc, m.Code)
@@ -248,6 +266,11 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		cc.AddString(instance + "." + specificIns.Name +
 			" = ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
+	case lispi.VSet:
+		cc.StartLine()
+		defer cc.EndLine()
+		cc.AddString(specificIns.Name + " = ")
+		object.writeExpressionInstruction(cc, specificIns.Expression)
 	case lispi.If:
 		cc.StartLine()
 		cc.AddString("if ")
@@ -275,6 +298,20 @@ func (object ClassGenerator) writeExpressionInstruction(
 	cc target.CodeCursor,
 	ins lispi.ExpressionInstruction,
 ) {
+	/*
+		//::run : infixu (store (join-lf (DATA)))
+		case lispi.$1:
+			object.writeExpressionInstruction(cc, specificIns.A)
+			cc.AddString(" $2 ")
+			object.writeExpressionInstruction(cc, specificIns.B)
+		//::end
+		//::run : infixu-ops (store (DATA))
+		Plus,+
+		Minus,-
+		Divide,/
+		Multiply,*
+		//::end
+	*/
 	switch specificIns := ins.(type) {
 	case lispi.IGet:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
@@ -289,7 +326,7 @@ func (object ClassGenerator) writeExpressionInstruction(
 		}
 		cc.AddString(str)
 	case lispi.LiteralInt:
-		cc.AddString(" " + specificIns.Value + " ")
+		cc.AddString(specificIns.Value)
 	case lispi.And:
 		object.writeExpressionInstruction(cc, specificIns.A)
 		cc.AddString(" && ")
@@ -313,6 +350,40 @@ func (object ClassGenerator) writeExpressionInstruction(
 	case lispi.Not:
 		cc.AddString("!(")
 		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(")")
+	case lispi.Eq:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" == ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	//::gen repcsv (infixu) (infixu-ops)
+	case lispi.Plus:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" + ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	case lispi.Minus:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" - ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	case lispi.Divide:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" / ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	case lispi.Multiply:
+		object.writeExpressionInstruction(cc, specificIns.A)
+		cc.AddString(" * ")
+		object.writeExpressionInstruction(cc, specificIns.B)
+	//::end
+	case lispi.StrSub:
+		cc.AddString("(")
+		object.writeExpressionInstruction(cc, specificIns.StringExpression)
+		cc.AddString(")[(")
+		object.writeExpressionInstruction(cc, specificIns.BeginAt)
+		cc.AddString("):(")
+		object.writeExpressionInstruction(cc, specificIns.EndAt)
+		cc.AddString(")]")
+	case lispi.StrLen:
+		cc.AddString("len(")
+		object.writeExpressionInstruction(cc, specificIns.StringExpression)
 		cc.AddString(")")
 	case lispi.ISerializeJSON:
 		// TODO: maybe replace this with a lispi statement

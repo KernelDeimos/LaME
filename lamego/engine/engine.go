@@ -42,7 +42,7 @@ type SyntaxFrontend interface {
 	Process(script string) ([]lispi.SequenceableInstruction, error)
 }
 
-//::run : apis (store 'model reader' 'model producer' 'class reader' 'class producer' 'code producer')
+//::run : apis (store 'model reader' 'model producer' 'class reader' 'class producer' 'code producer' 'configurable' 'utility user' 'runtime intelligence user')
 //::end
 
 //::run : readers (store model,model.Model class,target.Class)
@@ -53,14 +53,15 @@ type Engine struct {
 	SyntaxFrontends map[string]SyntaxFrontend
 	ClassGenerators map[string]target.ClassGenerator
 	//::gen repcsv '$ucc-1s []$ucc-1' (apis)
-	ModelReaders   []ModelReader
-	ModelProducers []ModelProducer
-	ClassReaders   []ClassReader
-	ClassProducers []ClassProducer
-	CodeProducers  []CodeProducer
+	ModelReaders             []ModelReader
+	ModelProducers           []ModelProducer
+	ClassReaders             []ClassReader
+	ClassProducers           []ClassProducer
+	CodeProducers            []CodeProducer
+	Configurables            []Configurable
+	UtilityUsers             []UtilityUser
+	RuntimeIntelligenceUsers []RuntimeIntelligenceUser
 	//::end
-	Configurables []Configurable
-	UtilityUsers  []UtilityUser
 	//::gen repcsv 'runtime$ucc-1List []$2' (readers)
 	runtimeModelList []model.Model
 	runtimeClassList []target.Class
@@ -77,9 +78,9 @@ func (e *Engine) GetFileManager() target.FileManager {
 }
 
 func (e *Engine) GetTypeMap(
-	classID, methodName string) map[string]target.Type {
+	pkgName, clsName, methodName string) map[string]target.Type {
 	// TODO: error handle
-	return e.runtimeTypeMaps[classID][methodName]
+	return e.runtimeTypeMaps[pkgName+"."+clsName][methodName]
 }
 
 type TypeValidationError struct {
@@ -112,16 +113,17 @@ func (e *Engine) InstallClassProducer(classProducer ClassProducer) {
 func (e *Engine) InstallCodeProducer(codeProducer CodeProducer) {
 	e.CodeProducers = append(e.CodeProducers, codeProducer)
 }
-
-//::end
-
 func (e *Engine) InstallConfigurable(configurable Configurable) {
 	e.Configurables = append(e.Configurables, configurable)
 }
-
-func (e *Engine) InstallUtilityUser(user UtilityUser) {
-	e.UtilityUsers = append(e.UtilityUsers, user)
+func (e *Engine) InstallUtilityUser(utilityUser UtilityUser) {
+	e.UtilityUsers = append(e.UtilityUsers, utilityUser)
 }
+func (e *Engine) InstallRuntimeIntelligenceUser(runtimeIntelligenceUser RuntimeIntelligenceUser) {
+	e.RuntimeIntelligenceUsers = append(e.RuntimeIntelligenceUsers, runtimeIntelligenceUser)
+}
+
+//::end
 
 /*
 //::run : thing-adder (store (join-lf (DATA)))
@@ -201,6 +203,8 @@ func (e *Engine) RunAll() EngineError {
 func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 	allModels := []model.Model{}
 
+	e.runtimeTypeMaps = map[string]map[string]map[string]target.Type{}
+
 	// Walk model source directory and load models
 	callback := func(path string, info os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".yaml" {
@@ -243,6 +247,9 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 	}
 	for _, u := range e.UtilityUsers {
 		u.SetUtilities(utilities)
+	}
+	for _, u := range e.RuntimeIntelligenceUsers {
+		u.SetRuntimeIntelligenceProvider(e)
 	}
 
 	for _, p := range e.ModelProducers {

@@ -1,0 +1,7 @@
+tasks:
+- name: MakeLamelib
+  target: go
+  source: lamesrc
+  output: "."
+  config:
+    pkgroot: github.com/KernelDeimos/LaME/lamelib

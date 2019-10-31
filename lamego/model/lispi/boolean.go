@@ -19,9 +19,15 @@ type Lt struct {
 	R ExpressionInstruction
 }
 
+// @avoid - syntax frontends should do (|| (< ..) (== ..))
 type LtEq struct {
 	L ExpressionInstruction
 	R ExpressionInstruction
+}
+
+type Eq struct {
+	A ExpressionInstruction
+	B ExpressionInstruction
 }
 
 func (i And) AsExpressionInstruction() ExpressionInstruction  { return i }
@@ -29,6 +35,7 @@ func (i Or) AsExpressionInstruction() ExpressionInstruction   { return i }
 func (i Not) AsExpressionInstruction() ExpressionInstruction  { return i }
 func (i Lt) AsExpressionInstruction() ExpressionInstruction   { return i }
 func (i LtEq) AsExpressionInstruction() ExpressionInstruction { return i }
+func (i Eq) AsExpressionInstruction() ExpressionInstruction   { return i }
 
 func Xor(A ExpressionInstruction, B ExpressionInstruction) ExpressionInstruction {
 	return Or{

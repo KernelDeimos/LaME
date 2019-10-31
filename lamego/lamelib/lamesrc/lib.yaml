@@ -1,5 +1,5 @@
 - DEFINE_MODELS
-- id: l.string
+- id: l.String
   type: library
   methods:
   - name: indexOf
@@ -10,16 +10,16 @@
     gencode: |
       (vset lensubject (strlen (vget subject)))
       (vset lensubstr (strlen (vget substr)))
-      (if (== (vget lensubject) 0)
+      (if (== (vget lensubject) (int 0))
         (
           (return (int 0))
         ))
       (if (< (vget lensubject) (vget lensubstr))
         (
-          (return false)
+          (return (int -1))
         ))
       (vset i (int 0))
-      (vset e (+ (int 1) (- (vget i) (vget lensubstr))))
+      (vset e (- (vget lensubject) (vget lensubstr)))
       (while (< (vget i) (vget e))
         (
           (vset testval
@@ -29,6 +29,7 @@
             (
               (return (vget i))
             ))
+          (vset i (+ (vget i) (int 1)))
         ))
       (return (int -1))
       

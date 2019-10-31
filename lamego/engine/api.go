@@ -13,6 +13,14 @@ type UtilityPackage struct {
 	SyntaxFrontends map[string]SyntaxFrontend
 }
 
+type RuntimeIntelligenceUser interface {
+	SetRuntimeIntelligenceProvider(provider RuntimeIntelligenceProvider)
+}
+
+type RuntimeIntelligenceProvider interface {
+	GetTypeMap(clsName, pkgName, methodName string) map[string]target.Type
+}
+
 type ModelReader interface {
 	AddModel(m model.Model)
 }
@@ -49,6 +57,7 @@ type EngineAPI interface {
 	InstallClassReader(r ClassReader)
 	InstallClassProducer(p ClassProducer)
 	InstallCodeProducer(p CodeProducer)
+	InstallRuntimeIntelligenceUser(u RuntimeIntelligenceUser)
 }
 
 type ConfigurationProvider interface {

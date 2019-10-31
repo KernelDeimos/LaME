@@ -8,8 +8,8 @@ type StrLen struct {
 //       optimize the equivalent special case of StrSub.
 type StrSub struct {
 	StringExpression ExpressionInstruction
-	BeginAt          int
-	EndAt            int
+	BeginAt          ExpressionInstruction
+	EndAt            ExpressionInstruction
 }
 
 type StrCat struct {

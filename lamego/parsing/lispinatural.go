@@ -2,6 +2,7 @@ package parsing
 
 import (
 	"errors"
+	"fmt"
 
 	// Reflection is used to avoid massive amounts of redundant
 	// code to process each LisPI type. To achieve self-hosting
@@ -93,6 +94,8 @@ func (this SyntaxFrontendLisPINatural) processSequenceable(
 		"return": lispi.Return{},
 		"iset":   lispi.ISet{},
 		"if":     lispi.If{},
+		"vset":   lispi.VSet{},
+		"while":  lispi.While{},
 	}
 
 	output, recognized := validSequenceables[name]
@@ -114,9 +117,15 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 	name string, args []interface{},
 ) (lispi.ExpressionInstruction, error) {
 	validExpressions := map[string]lispi.ExpressionInstruction{
-		"iget": lispi.IGet{},
-		"<":    lispi.Lt{},
-		"int":  lispi.LiteralInt{},
+		"iget":   lispi.IGet{},
+		"vget":   lispi.VGet{},
+		"<":      lispi.Lt{},
+		"int":    lispi.LiteralInt{},
+		"strlen": lispi.StrLen{},
+		"strsub": lispi.StrSub{},
+		"==":     lispi.Eq{},
+		"+":      lispi.Plus{},
+		"-":      lispi.Minus{},
 	}
 
 	output, recognized := validExpressions[name]
@@ -137,7 +146,9 @@ func (this SyntaxFrontendLisPINatural) reflectListToLisPI(
 	t reflect.Type, args []interface{},
 ) (interface{}, error) {
 	if len(args) != t.NumField() {
-		return nil, errors.New("Wrong number of fields for a " + t.Name())
+		return nil, errors.New(fmt.Sprintf(
+			"Wrong number of fields for a "+t.Name()+": %v",
+			args))
 	}
 	var output interface{}
 	output = (reflect.New(t).Interface()).(interface{})
@@ -167,9 +178,19 @@ func (this SyntaxFrontendLisPINatural) reflectListToLisPI(
 		case "string":
 			strtoken, ok := (args[i]).(string)
 			if !ok {
-				return nil, errors.New("found list token when expecting string")
+				return nil, errors.New(fmt.Sprintf(
+					"found wrong token when expecting string (%s->%d:%s): %v",
+					t.Name(), i, field.Name, args[i]))
 			}
 			reflect.ValueOf(output).Elem().Field(i).Set(reflect.ValueOf(strtoken))
+		case "int":
+			inttoken, ok := (args[i]).(int)
+			if !ok {
+				return nil, errors.New(fmt.Sprintf(
+					"found wrong token when expecting int (%s->%d:%s): %v",
+					t.Name(), i, field.Name, args[i]))
+			}
+			reflect.ValueOf(output).Elem().Field(i).Set(reflect.ValueOf(inttoken))
 		case "bool":
 			strtoken, ok := (args[i]).(string)
 			if !ok {

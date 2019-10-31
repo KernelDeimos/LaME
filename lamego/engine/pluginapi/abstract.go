@@ -6,8 +6,9 @@ import (
 )
 
 type AbstractCodeGenerator struct {
-	ClassesToGenerate []target.Class
-	CodeProducerAPI   engine.CodeProducerAPI
+	ClassesToGenerate           []target.Class
+	CodeProducerAPI             engine.CodeProducerAPI
+	RuntimeIntelligenceProvider engine.RuntimeIntelligenceProvider
 }
 
 func (plugin *AbstractCodeGenerator) AddClass(c target.Class) {
@@ -16,6 +17,12 @@ func (plugin *AbstractCodeGenerator) AddClass(c target.Class) {
 
 func (plugin *AbstractCodeGenerator) SetAPI(api engine.CodeProducerAPI) {
 	plugin.CodeProducerAPI = api
+}
+
+func (plugin *AbstractCodeGenerator) SetRuntimeIntelligenceProvider(
+	provider engine.RuntimeIntelligenceProvider,
+) {
+	plugin.RuntimeIntelligenceProvider = provider
 }
 
 type AbstractClassGenerator struct {

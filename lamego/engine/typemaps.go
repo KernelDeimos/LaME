@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/target"
 	// "github.com/sirupsen/logrus"
@@ -11,6 +12,14 @@ func (e *Engine) GenerateTypeMaps(c target.Class) []TypeValidationError {
 	for _, m := range c.Methods {
 		methodVars := map[string]target.Type{}
 		e.genTypesForSequenceable(c, m, &methodVars, &errs, m.Code)
+		fmt.Println("--", c.Package, c.Name, m.Name)
+		if _, isset := e.runtimeTypeMaps[c.Package+"."+c.Name]; !isset {
+			e.runtimeTypeMaps[c.Package+"."+c.Name] =
+				map[string]map[string]target.Type{}
+		}
+		e.runtimeTypeMaps[c.Package+"."+c.Name][m.Name] =
+			methodVars
+		fmt.Println("--", e.runtimeTypeMaps[c.Package+"."+c.Name][m.Name])
 	}
 	return errs
 }
@@ -26,6 +35,9 @@ func (e *Engine) genTypesForSequenceable(
 		for _, subIns := range specificIns.StatementList {
 			e.genTypesForSequenceable(c, m, vars, errs, subIns)
 		}
+	case lispi.While:
+		e.genTypesForSequenceable(c, m, vars, errs,
+			specificIns.Code)
 	case lispi.Return:
 		t := e.getTypeForExpression(
 			c, m, vars, errs, specificIns.Expression)
@@ -73,6 +85,22 @@ func (e *Engine) getTypeForExpression(
 		return target.Bool
 	case lispi.LiteralInt:
 		return target.Int
+	case lispi.Plus:
+		// TODO: search subtree for reals
+		return target.Int
+	case lispi.Minus:
+		// TODO: search subtree for reals
+		return target.Int
+	case lispi.Multiply:
+		// TODO: search subtree for reals
+		return target.Int
+	case lispi.Divide:
+		// TODO: search subtree for reals
+		return target.Int
+	case lispi.StrLen:
+		return target.Int
+	case lispi.StrSub:
+		return target.String
 	case lispi.IGet:
 		for _, ivar := range c.Variables {
 			if ivar.Name == specificIns.Name {
