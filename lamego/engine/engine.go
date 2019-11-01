@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -149,22 +148,6 @@ type EngineConfig struct {
 
 type EngineDelegates struct {
 	ClassGenerators map[string]target.ClassGenerator
-}
-
-type EngineRunConfig struct {
-	Name                     string                            `yaml:"name"`
-	TargetLanguage           string                            `yaml:"target"`
-	ModelSourceDirectory     string                            `yaml:"source"`
-	GeneratorOutputDirectory string                            `yaml:"output"`
-	PluginConfig             map[string]map[string]interface{} `yaml:"config"`
-}
-
-func (conf EngineRunConfig) GetConfig(name string) string {
-	b, err := json.Marshal(conf.PluginConfig[name])
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
 }
 
 func NewEngine(config EngineConfig) *Engine {

@@ -6,14 +6,13 @@ import "encoding/json"
 
 type String struct {
 }
-
-func (o *String) indexOf(subject string, substr string) int {
-	var lensubject int
-	var lensubstr int
+func (o *String) indexOf(subject string,substr string) int {
 	var i int
 	var e int
 	var testval string
-
+	var lensubject int
+	var lensubstr int
+	
 	lensubject = len(subject)
 	lensubstr = len(substr)
 	if lensubject == 0 {
@@ -34,12 +33,10 @@ func (o *String) indexOf(subject string, substr string) int {
 	return -1
 }
 func (o *String) serializeJSON() string {
-
+	
 	return (func() string {
 		bout, err := json.Marshal(o)
-		if err != nil {
-			return ""
-		}
+		if err != nil { return "" }
 		return string(bout)
 	})()
 }

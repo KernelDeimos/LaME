@@ -5,4 +5,7 @@ tasks:
   output: "."
   config:
     language.go:
-      pkgroot: github.com/KernelDeimos/LaME/lamelib
+      packages:
+        l: github.com/KernelDeimos/LaME/lamelib
+  export:
+    l.String: LaME.lib.string

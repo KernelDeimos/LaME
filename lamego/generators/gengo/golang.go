@@ -9,6 +9,8 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/engine/pluginapi"
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/support"
+	"github.com/KernelDeimos/LaME/lamego/support/golang"
+	"github.com/KernelDeimos/LaME/lamego/support/typenamesupport"
 	"github.com/KernelDeimos/LaME/lamego/target"
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
@@ -30,7 +32,7 @@ type ClassGenerator struct {
 	pluginapi.AbstractCodeGenerator
 
 	WriteContext support.WriteContext
-	Config       map[string]string
+	Config       map[string]interface{}
 }
 
 func (object *ClassGenerator) Install(api engine.EngineAPI) {
@@ -107,7 +109,7 @@ func (object ClassGenerator) WriteClass(
 		defer cc.DecrIndent()
 		for _, v := range c.Variables {
 			typ, isVoid := object.getTypeString(
-				filestate, v.Type)
+				filestate, c, v.Type)
 			if isVoid {
 				// TODO: this is a user error
 			}
@@ -159,7 +161,7 @@ func (object ClassGenerator) writeMethod(
 	c target.Class, cc target.CodeCursor, m target.Method,
 	filestate *FileState,
 ) {
-	typ, isVoid := object.getTypeString(filestate, m.Return.Type)
+	typ, isVoid := object.getTypeString(filestate, c, m.Return.Type)
 
 	// used to skip arguments in variable declaration
 	argNames := []string{}
@@ -170,7 +172,7 @@ func (object ClassGenerator) writeMethod(
 		argslice := []string{}
 		for _, v := range m.Arguments {
 			argType, argTypeIsVoid :=
-				object.getTypeString(filestate, v.Type)
+				object.getTypeString(filestate, c, v.Type)
 			if argTypeIsVoid {
 				// TODO: this is a user error
 			}
@@ -213,25 +215,37 @@ func (object ClassGenerator) writeMethod(
 	object.writeFakeBlock(cc, m.Code)
 }
 
-func (object ClassGenerator) getTypeString(filestate *FileState, t target.Type) (string, bool) {
-	if t.TypeOfType == target.PrimitiveType &&
-		t.Identifier == target.PrimitiveVoid {
-		return "", true
-	}
-	parts := strings.Split(t.Identifier, ".")
-	if len(parts) < 1 {
-		return "", true
-	}
-	// Special package "project"
-	if parts[0] == "project" {
-		importName := object.Config["pkgroot"]
-		if len(parts) > 2 {
-			importName += "/" + strings.Join(parts[1:len(parts)-1], "/")
+func (object ClassGenerator) getTypeString(filestate *FileState, c target.Class, t target.Type) (string, bool) {
+	packages := golang.MapStrIToMapStrStr(
+		object.Config["packages"].(map[string]interface{}))
+	info := typenamesupport.GetTypeInfo(t, packages, c.Package)
+
+	if info.IsPrimitive {
+		if t.Identifier == target.PrimitiveVoid ||
+			info.IsSpecialVoid {
+			return "", true
 		}
-		filestate.imports[importName] = struct{}{}
-		return parts[len(parts)-1], false
+		return t.Identifier, false
 	}
-	return t.Identifier, false
+
+	if info.FailedToMatch {
+		panic("Unrecognized package: " + info.LaMEPackage)
+	}
+
+	if info.IsCurrentPackage {
+		return info.TypeName, false
+	}
+
+	filestate.imports[info.LanguagePackage] = struct{}{}
+	var packageName string
+	if len(info.LanguageRemainder) == 0 {
+		parts := strings.Split(info.LanguagePackage, "/")
+		packageName = parts[len(parts)-1]
+	} else {
+		packageName = info.LanguageRemainder[len(info.LanguageRemainder)-1]
+	}
+
+	return packageName + "." + info.TypeName, false
 }
 
 func (object ClassGenerator) writeFakeBlock(
