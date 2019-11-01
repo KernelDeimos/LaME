@@ -37,6 +37,20 @@ func ModelTypeToTargetType(tIn model.Type) (tOut target.Type) {
 	return
 }
 
+func ModelVisibilityToTargetVisibility(mv model.Visibility) target.Visibility {
+	if mv == model.VisibilityPublic {
+		return target.VisibilityPublic
+	}
+	if mv == model.VisibilityPrivate {
+		return target.VisibilityPrivate
+	}
+
+	panic("A model was received with an invalid value for " +
+		"visibility. This likely means model validation " +
+		"is not yet implemented and an incorrect string " +
+		"was used in the model file.")
+}
+
 type SyntaxFrontend interface {
 	Process(script string) ([]lispi.SequenceableInstruction, error)
 }

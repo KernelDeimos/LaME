@@ -6,12 +6,12 @@ import "encoding/json"
 
 type String struct {
 }
-func (o *String) indexOf(subject string,substr string) int {
-	var i int
-	var e int
+func (o *String) IndexOf(subject string,substr string) int {
 	var testval string
 	var lensubject int
 	var lensubstr int
+	var i int
+	var e int
 	
 	lensubject = len(subject)
 	lensubstr = len(substr)
@@ -23,7 +23,7 @@ func (o *String) indexOf(subject string,substr string) int {
 	}
 	i = 0
 	e = lensubject - lensubstr
-	for i < e {
+	for i <= e {
 		testval = (subject)[(i):(i + lensubstr)]
 		if testval == substr {
 			return i

@@ -15,16 +15,18 @@ type Argument struct {
 }
 
 type Field struct {
-	Name string `yaml:"name"`
-	Type string `yaml:"type"`
+	Name       string     `yaml:"name"`
+	Type       string     `yaml:"type"`
+	Visibility Visibility `yaml:"visibility"`
 }
 
 type Method struct {
-	Name     string            `yaml:"name"`
-	Args     []Argument        `yaml:"args"`
-	Return   string            `yaml:"return"`
-	Gencode  string            `yaml:"gencode"`
-	Hardcode map[string]string `yaml:"hardcode"`
+	Name       string            `yaml:"name"`
+	Args       []Argument        `yaml:"args"`
+	Return     string            `yaml:"return"`
+	Gencode    string            `yaml:"gencode"`
+	Hardcode   map[string]string `yaml:"hardcode"`
+	Visibility Visibility        `yaml:"visibility"`
 }
 
 type ModelMeta struct {

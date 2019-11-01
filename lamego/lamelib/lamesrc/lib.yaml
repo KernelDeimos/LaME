@@ -20,7 +20,7 @@
         ))
       (vset i (int 0))
       (vset e (- (vget lensubject) (vget lensubstr)))
-      (while (< (vget i) (vget e))
+      (while (<= (vget i) (vget e))
         (
           (vset testval
             (strsub (vget subject) (vget i)

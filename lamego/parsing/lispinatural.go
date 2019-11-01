@@ -120,6 +120,7 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 		"iget":   lispi.IGet{},
 		"vget":   lispi.VGet{},
 		"<":      lispi.Lt{},
+		"<=":     lispi.LtEq{},
 		"int":    lispi.LiteralInt{},
 		"strlen": lispi.StrLen{},
 		"strsub": lispi.StrSub{},

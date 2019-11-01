@@ -170,6 +170,8 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 
 			c.Methods = append(c.Methods, target.Method{
 				Name: me.Name,
+				Visibility: engine.ModelVisibilityToTargetVisibility(
+					me.Visibility),
 				Return: target.Variable{
 					Type: engine.ModelTypeToTargetType(
 						model.GetTypeObject(me.Return),

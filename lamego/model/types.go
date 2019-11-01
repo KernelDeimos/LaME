@@ -2,26 +2,26 @@ package model
 
 type Primitive byte
 
-var primitives = map[string]Primitive{
-	"string": 's',
-	"bool":   'b',
-	"int":    'i',
-	"float":  'f',
-	"object": 'o', // TODO: support for this might be weird
-	"void":   'v',
-	"lame":   'l',
-	"LaME":   'l', // Also allow stylized version, of course
-}
-
 const (
-	PrimitiveString = 's'
-	PrimitiveBool   = 'b'
-	PrimitiveInt    = 'i'
-	PrimitiveFloat  = 'f'
-	PrimitiveObject = 'o'
-	PrimitiveVoid   = 'v'
-	PrimitiveLaME   = 'l'
+	PrimitiveString Primitive = 's'
+	PrimitiveBool             = 'b'
+	PrimitiveInt              = 'i'
+	PrimitiveFloat            = 'f'
+	PrimitiveObject           = 'o'
+	PrimitiveVoid             = 'v'
+	PrimitiveLaME             = 'l'
 )
+
+var primitives = map[string]Primitive{
+	"string": PrimitiveString,
+	"bool":   PrimitiveBool,
+	"int":    PrimitiveInt,
+	"float":  PrimitiveFloat,
+	"object": PrimitiveObject, // TODO: support for this might be weird
+	"void":   PrimitiveVoid,
+	"lame":   PrimitiveLaME,
+	"LaME":   PrimitiveLaME, // Also allow stylized version, of course
+}
 
 type Type struct {
 	Primitive  Primitive
@@ -29,3 +29,10 @@ type Type struct {
 }
 
 var Bool = Type{Primitive: PrimitiveBool}
+
+type Visibility string
+
+const (
+	VisibilityPublic  Visibility = ""
+	VisibilityPrivate            = "private"
+)

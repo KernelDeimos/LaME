@@ -163,6 +163,10 @@ func (object ClassGenerator) writeMethod(
 ) {
 	typ, isVoid := object.getTypeString(filestate, c, m.Return.Type)
 
+	mTargetName := m.Name
+	if m.Visibility == target.VisibilityPublic {
+		mTargetName = strings.Title(m.Name)
+	}
 	// used to skip arguments in variable declaration
 	argNames := []string{}
 
@@ -185,14 +189,14 @@ func (object ClassGenerator) writeMethod(
 
 	if isVoid {
 		cc.AddLine(fmt.Sprintf(MethodHeaderVoid,
-			c.Name, m.Name, argString) + " {")
+			c.Name, mTargetName, argString) + " {")
 	} else {
 		// Currently not supporting multiple return values
 		// or named returns, since many target languages
 		// won't support this anyway.
 		returnString := typ
 		cc.AddLine(fmt.Sprintf(MethodHeaderExpression,
-			c.Name, m.Name, argString, returnString) + " {")
+			c.Name, mTargetName, argString, returnString) + " {")
 	}
 	defer cc.AddLine("}")
 

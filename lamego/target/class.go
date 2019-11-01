@@ -36,10 +36,11 @@ type ClassVariable struct {
 }
 
 type Method struct {
-	Name      string
-	Arguments []Variable
-	Return    Variable
-	Code      lispi.FakeBlock
+	Name       string
+	Arguments  []Variable
+	Return     Variable
+	Code       lispi.FakeBlock
+	Visibility Visibility
 }
 
 type ClassReference string
