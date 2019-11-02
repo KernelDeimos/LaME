@@ -3,11 +3,6 @@ package engine
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"gopkg.in/yaml.v2"
 
 	"github.com/KernelDeimos/LaME/lamego/model"
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
