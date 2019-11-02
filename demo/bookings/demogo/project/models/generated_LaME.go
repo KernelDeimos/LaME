@@ -39,20 +39,22 @@ func (o *Passenger) setEmail(v string) {
 }
 func (o *Passenger) ToCSV() string {
 	
-	return o.getName
+	return o.getName()
 }
 func (o *Passenger) GetDiscountPercent() int {
+	var age int
 	
-	if o.age < 12 {
+	age = o.getAge()
+	if age < 12 {
 		return 100
 	}
-	if o.age < 18 {
+	if age < 18 {
 		return 20
 	}
-	if o.age < 24 {
+	if age < 24 {
 		return 10
 	}
-	if 65 < o.age {
+	if 65 < age {
 		return 50
 	}
 }

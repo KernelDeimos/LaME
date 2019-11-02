@@ -276,7 +276,14 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		object.writeExpressionInstruction(cc, specificIns.Expression)
 	case lispi.ICall:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
-		cc.AddString(instance + "." + specificIns.Name)
+		cc.AddString(instance + "." + specificIns.Name + "(")
+		for i, expr := range specificIns.Arguments.Expressions {
+			if i != 0 {
+				cc.AddString(", ")
+			}
+			object.writeExpressionInstruction(cc, expr)
+		}
+		cc.AddString(")")
 	case lispi.ISet:
 		cc.StartLine()
 		defer cc.EndLine()
@@ -335,7 +342,14 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString(instance + "." + specificIns.Name)
 	case lispi.ICall:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
-		cc.AddString(instance + "." + specificIns.Name)
+		cc.AddString(instance + "." + specificIns.Name + "(")
+		for i, expr := range specificIns.Arguments.Expressions {
+			if i != 0 {
+				cc.AddString(", ")
+			}
+			object.writeExpressionInstruction(cc, expr)
+		}
+		cc.AddString(")")
 	case lispi.VGet:
 		cc.AddString(specificIns.Name)
 	case lispi.LiteralBool:

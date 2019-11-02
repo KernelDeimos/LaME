@@ -78,16 +78,16 @@ project.models.Passenger.methods = [
 		name: "getDiscountPercent",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"int"}},
 		jsFunction: function () {
-			if ( this.getAge() <  12  ) {
+			if ( age <  12  ) {
 				return  100 ;
 			}
-			if ( this.getAge() <  18  ) {
+			if ( age <  18  ) {
 				return  20 ;
 			}
-			if ( this.getAge() <  24  ) {
+			if ( age <  24  ) {
 				return  10 ;
 			}
-			if (  65  < this.getAge() ) {
+			if (  65  < age ) {
 				return  50 ;
 			}
 		},

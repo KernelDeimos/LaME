@@ -17,16 +17,17 @@
     args: []
     return: int
     gencode: |
-      (if (< (iget age) (int 12)) (
+      (vset age (icall getAge ()))
+      (if (< (vget age) (int 12)) (
         (return (int 100))
       ))
-      (if (< (iget age) (int 18)) (
+      (if (< (vget age) (int 18)) (
         (return (int 20))
       ))
-      (if (< (iget age) (int 24)) (
+      (if (< (vget age) (int 24)) (
         (return (int 10))
       ))
-      (if (< (int 65) (iget age)) (
+      (if (< (int 65) (vget age)) (
         (return (int 50))
       ))
 - id: project.models.Booking
