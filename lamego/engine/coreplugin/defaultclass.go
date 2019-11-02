@@ -85,7 +85,8 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Return: target.Variable{
 					Type: fieldType,
 				},
-				Arguments: []target.Variable{},
+				Visibility: target.VisibilityPublic,
+				Arguments:  []target.Variable{},
 				Code: lispi.FakeBlock{
 					StatementList: []lispi.SequenceableInstruction{
 						lispi.Return{
@@ -101,6 +102,7 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Return: target.Variable{
 					Type: target.Void,
 				},
+				Visibility: target.VisibilityPublic,
 				Arguments: []target.Variable{
 					target.Variable{
 						Name: "v",
@@ -205,12 +207,25 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				}
 				t := model.GetTypeObject(f.Type)
 				if t.Primitive != model.PrimitiveLaME {
+					var expr lispi.ExpressionInstruction
+					switch t.Primitive {
+					case model.PrimitiveString:
+						expr = lispi.StrCat{
+							StringExpressionA: lispi.StrCat{
+								StringExpressionA: lispi.LiteralString{Value: `"`},
+								StringExpressionB: lispi.IGet{Name: f.Name + "__"},
+							}, StringExpressionB: lispi.LiteralString{Value: `"`}}
+					case model.PrimitiveInt:
+						expr = lispi.IntToString{
+							IntExpression: lispi.IGet{Name: f.Name + "__"},
+						}
+					}
 					outA := out.StringExpressionA.(lispi.StrCat)
 					outA.StringExpressionB = lispi.StrCat{
 						StringExpressionA: outA.StringExpressionB,
 						StringExpressionB: maybeComma(lispi.StrCat{
 							StringExpressionA: lispi.LiteralString{Value: `"` + f.Name + `":`},
-							StringExpressionB: lispi.IGet{Name: f.Name + "__"}})}
+							StringExpressionB: expr})}
 					out.StringExpressionA = outA
 					doComma = true
 				}
@@ -220,7 +235,8 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Return: target.Variable{
 					Type: target.String,
 				},
-				Arguments: []target.Variable{},
+				Visibility: target.VisibilityPublic,
+				Arguments:  []target.Variable{},
 				Code: lispi.FakeBlock{
 					StatementList: []lispi.SequenceableInstruction{
 						lispi.Return{

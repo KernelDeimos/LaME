@@ -34,6 +34,9 @@ type ClassGenerator struct {
 
 	WriteContext support.WriteContext
 	Config       map[string]interface{}
+
+	// Hack; needs to be fixed it this becomes threaded
+	fileState *FileState
 }
 
 func (object *ClassGenerator) Install(api engine.EngineAPI) {
@@ -95,6 +98,7 @@ func (object ClassGenerator) WriteClass(
 	} else {
 		filestate = fileStates[filename]
 	}
+	object.fileState = filestate
 
 	// Uhh.. I guess I gotta make a struct first
 	cc.AddLine("type " + c.Name + " struct {")
@@ -433,6 +437,11 @@ func (object ClassGenerator) writeExpressionInstruction(
 		object.writeExpressionInstruction(cc, specificIns.StringExpressionA)
 		cc.AddString(" + ")
 		object.writeExpressionInstruction(cc, specificIns.StringExpressionB)
+	case lispi.IntToString:
+		object.fileState.imports["fmt"] = struct{}{}
+		cc.AddString("fmt.Sprint(")
+		object.writeExpressionInstruction(cc, specificIns.IntExpression)
+		cc.AddString(")")
 	case lispi.ISerializeJSON:
 		// TODO: maybe replace this with a lispi statement
 		// TODO: creating this anonymous function makes me

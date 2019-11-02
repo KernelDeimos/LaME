@@ -239,6 +239,7 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 		}
 		logrus.Infof("Feeding model readers (round %d)", i)
 		for _, m := range e.runtimeModelList {
+			logrus.Info("+ ", m.ID)
 			for _, r := range e.ModelReaders {
 				r.AddModel(m)
 			}
