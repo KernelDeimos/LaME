@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/KernelDeimos/LaME/lamego/model"
@@ -42,6 +43,10 @@ func (producer *FileWalkModelProducer) InvokeModels() {
 				return err
 			}
 			for _, m := range models {
+				if m.Type == "command" {
+					logrus.Warn("Command models are not supported yet")
+					continue
+				}
 				producer.modelReader__.AddModel(m)
 			}
 		}

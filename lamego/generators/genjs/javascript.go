@@ -173,6 +173,9 @@ func (object ClassGenerator) writeVariable(cc target.CodeCursor, v target.Variab
 func (object ClassGenerator) EndFile(
 	filename string, fm target.FileManager,
 ) {
+	if filename != "generated_LaME.js" {
+		return
+	}
 	cc, _ := fm.RequestFileForCode(filename)
 	cc.AddLine("module.exports = project;")
 }

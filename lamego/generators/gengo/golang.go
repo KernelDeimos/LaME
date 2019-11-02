@@ -128,6 +128,10 @@ func (object ClassGenerator) EndFile(
 	// Get code cursor and file-related state
 	cc, _ := fm.RequestFileForCode(filename)
 	filestate := fileStates[filename]
+	// filestate is nil if this is a file made by something else
+	if filestate == nil {
+		return
+	}
 	cc = cc.GetSubCursor(support.CursorImports)
 
 	imports := filestate.imports
