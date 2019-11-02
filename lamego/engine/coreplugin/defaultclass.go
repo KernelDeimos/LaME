@@ -185,6 +185,36 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 		}
 
 		if c.Meta.Serialize.JSON {
+			out := lispi.StrCat{
+				StringExpressionA: lispi.StrCat{
+					StringExpressionA: lispi.LiteralString{Value: "{"},
+					StringExpressionB: lispi.LiteralString{""},
+				},
+				StringExpressionB: lispi.LiteralString{Value: "}"},
+			}
+			doComma := false
+			for _, f := range m.Fields {
+				maybeComma := func(in lispi.ExpressionInstruction) lispi.ExpressionInstruction {
+					if doComma {
+						return lispi.StrCat{
+							StringExpressionA: lispi.LiteralString{Value: ","},
+							StringExpressionB: in,
+						}
+					}
+					return in
+				}
+				t := model.GetTypeObject(f.Type)
+				if t.Primitive != model.PrimitiveLaME {
+					outA := out.StringExpressionA.(lispi.StrCat)
+					outA.StringExpressionB = lispi.StrCat{
+						StringExpressionA: outA.StringExpressionB,
+						StringExpressionB: maybeComma(lispi.StrCat{
+							StringExpressionA: lispi.LiteralString{Value: `"` + f.Name + `":`},
+							StringExpressionB: lispi.IGet{Name: f.Name + "__"}})}
+					out.StringExpressionA = outA
+					doComma = true
+				}
+			}
 			c.Methods = append(c.Methods, target.Method{
 				Name: "serializeJSON",
 				Return: target.Variable{
@@ -194,7 +224,7 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Code: lispi.FakeBlock{
 					StatementList: []lispi.SequenceableInstruction{
 						lispi.Return{
-							Expression: lispi.ISerializeJSON{},
+							Expression: out,
 						},
 					},
 				},

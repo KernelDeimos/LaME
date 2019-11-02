@@ -1,5 +1,4 @@
 // GENERATED CODE - changes to this file may be overwritten
-var project = {};
 var constructor_ = function() {
 	var obj = {};
 	for (var i=0; i < this.fields.length; i++) {
@@ -11,6 +10,8 @@ var constructor_ = function() {
 	}
 	return obj;
 }
+var project = {}; // package path
+project.models = {}; // package path
 project.models.Passenger = {};
 project.models.Passenger.fields = [
 	{"name":"age__","type":{"TypeOfType":112,"Identifier":"int"}},
@@ -70,7 +71,7 @@ project.models.Passenger.methods = [
 		name: "toCSV",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
-			return this.getName();
+			return ;
 		},
 	},
 	{
@@ -95,11 +96,11 @@ project.models.Passenger.methods = [
 		name: "serializeJSON",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
-			return JSON.stringify(this);
+			return ;
 		},
 	},
 ],
-project.models.Passenger.create = constructor_.bind(cname);
+project.models.Passenger.create = constructor_.bind(project.models.Passenger);
 project.models.Booking = {};
 project.models.Booking.fields = [
 	{"name":"passenger__","type":{"TypeOfType":108,"Identifier":"project.models.Passenger"}},
@@ -142,9 +143,9 @@ project.models.Booking.methods = [
 		name: "serializeJSON",
 		typReturn: {"name":"","type":{"TypeOfType":112,"Identifier":"string"}},
 		jsFunction: function () {
-			return JSON.stringify(this);
+			return ;
 		},
 	},
 ],
-project.models.Booking.create = constructor_.bind(cname);
+project.models.Booking.create = constructor_.bind(project.models.Booking);
 module.exports = project;

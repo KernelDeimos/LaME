@@ -289,13 +289,15 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 			errs := e.GenerateTypeMaps(c)
 			if errs != nil && len(errs) > 0 {
 				for _, thisErr := range errs {
-					logrus.WithFields(logrus.Fields{
-						"package": (*thisErr.SourceClass).Package,
-						"class":   (*thisErr.SourceClass).Name,
-						"method":  (*thisErr.SourceMethod).Name,
-					}).Error(
-						thisErr.M,
-					)
+					if thisErr.SourceClass != nil && thisErr.SourceMethod != nil {
+						logrus.WithFields(logrus.Fields{
+							"package": (*thisErr.SourceClass).Package,
+							"class":   (*thisErr.SourceClass).Name,
+							"method":  (*thisErr.SourceMethod).Name,
+						}).Error(thisErr.M)
+					} else {
+						logrus.Error(thisErr.M)
+					}
 				}
 				logrus.Fatal("Halted with errors")
 			}

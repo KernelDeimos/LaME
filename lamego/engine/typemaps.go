@@ -101,6 +101,8 @@ func (e *Engine) getTypeForExpression(
 		return target.Int
 	case lispi.StrSub:
 		return target.String
+	case lispi.StrCat:
+		return target.String
 	case lispi.IGet:
 		for _, ivar := range c.Variables {
 			if ivar.Name == specificIns.Name {
@@ -108,14 +110,30 @@ func (e *Engine) getTypeForExpression(
 			}
 		}
 		*errs = append(*errs, TypeValidationError{
-			M: "unrecognized instance variable '" + specificIns.Name + "'",
+			M:            "unrecognized instance variable '" + specificIns.Name + "'",
+			SourceClass:  &c,
+			SourceMethod: &m,
+		})
+		return target.Void
+	case lispi.ICall:
+		for _, m := range c.Methods {
+			if m.Name == specificIns.Name {
+				return m.Return.Type
+			}
+		}
+		*errs = append(*errs, TypeValidationError{
+			M:            "unrecognized method '" + specificIns.Name + "'",
+			SourceClass:  &c,
+			SourceMethod: &m,
 		})
 		return target.Void
 	case lispi.VGet:
 		typ, exists := (*vars)[specificIns.Name]
 		if !exists {
 			*errs = append(*errs, TypeValidationError{
-				M: "unrecognized variable '" + specificIns.Name + "'",
+				M:            "unrecognized variable '" + specificIns.Name + "'",
+				SourceClass:  &c,
+				SourceMethod: &m,
 			})
 			return target.Void
 		}

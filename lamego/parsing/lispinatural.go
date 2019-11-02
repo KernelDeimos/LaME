@@ -93,6 +93,7 @@ func (this SyntaxFrontendLisPINatural) processSequenceable(
 	validSequenceables := map[string]lispi.SequenceableInstruction{
 		"return": lispi.Return{},
 		"iset":   lispi.ISet{},
+		"icall":  lispi.ICall{},
 		"if":     lispi.If{},
 		"vset":   lispi.VSet{},
 		"while":  lispi.While{},
@@ -118,12 +119,14 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 ) (lispi.ExpressionInstruction, error) {
 	validExpressions := map[string]lispi.ExpressionInstruction{
 		"iget":   lispi.IGet{},
+		"icall":  lispi.ICall{},
 		"vget":   lispi.VGet{},
 		"<":      lispi.Lt{},
 		"<=":     lispi.LtEq{},
 		"int":    lispi.LiteralInt{},
 		"strlen": lispi.StrLen{},
 		"strsub": lispi.StrSub{},
+		"strcat": lispi.StrSub{},
 		"==":     lispi.Eq{},
 		"+":      lispi.Plus{},
 		"-":      lispi.Minus{},
@@ -176,6 +179,23 @@ func (this SyntaxFrontendLisPINatural) reflectListToLisPI(
 				return nil, err
 			}
 			reflect.ValueOf(output).Elem().Field(i).Set(reflect.ValueOf(expr))
+		case "ExpressionList":
+			exprListList, ok := (args[i]).([]interface{})
+			exprListOut := []lispi.ExpressionInstruction{}
+			for i := range exprListList {
+				exprList := (exprListList[i]).([]interface{})
+				if !ok {
+					return nil, errors.New("Found non-list in list of expressions")
+				}
+				expr, err := this.maybeProcessExpression(exprList)
+				if err != nil {
+					return nil, err
+				}
+				exprListOut = append(exprListOut, expr)
+			}
+			reflect.ValueOf(output).Elem().Field(i).Set(reflect.ValueOf(lispi.ExpressionList{
+				Expressions: exprListOut,
+			}))
 		case "string":
 			strtoken, ok := (args[i]).(string)
 			if !ok {

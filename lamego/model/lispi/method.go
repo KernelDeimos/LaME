@@ -7,6 +7,14 @@ type IGet struct {
 
 func (i IGet) AsExpressionInstruction() ExpressionInstruction { return i }
 
+type ICall struct {
+	Name      string
+	Arguments ExpressionList
+}
+
+func (i ICall) AsExpressionInstruction() ExpressionInstruction     { return i }
+func (i ICall) AsSequenceableInstruction() SequenceableInstruction { return i }
+
 type ISet struct {
 	Name       string
 	Expression ExpressionInstruction

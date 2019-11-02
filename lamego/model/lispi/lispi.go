@@ -10,6 +10,10 @@ type ExpressionInstruction interface {
 	AsExpressionInstruction() ExpressionInstruction
 }
 
+type ExpressionList struct {
+	Expressions []ExpressionInstruction
+}
+
 /*
       return
         AND

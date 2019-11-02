@@ -5,6 +5,7 @@ tasks:
   output: demogo
   config:
     language.go:
+        packages: {}
         pkgroot: github.com/KernelDeimos/LaME/demo/demogo
 - name: Browser
   target: js

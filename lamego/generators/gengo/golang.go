@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/KernelDeimos/gottagofast/utilstr"
+
 	"github.com/KernelDeimos/LaME/lamego/engine"
 	"github.com/KernelDeimos/LaME/lamego/engine/pluginapi"
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
@@ -12,7 +14,6 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/support/golang"
 	"github.com/KernelDeimos/LaME/lamego/support/typenamesupport"
 	"github.com/KernelDeimos/LaME/lamego/target"
-	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
 var MethodHeaderExpression = "func (o *%s) %s(%s) %s"
@@ -93,11 +94,6 @@ func (object ClassGenerator) WriteClass(
 		cc.AddLine("")
 	} else {
 		filestate = fileStates[filename]
-	}
-
-	// Add implicit imports (from LaME core meta attributes)
-	if c.Meta.Serialize.JSON {
-		filestate.imports["encoding/json"] = struct{}{}
 	}
 
 	// Uhh.. I guess I gotta make a struct first
@@ -278,6 +274,9 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		defer cc.EndLine()
 		cc.AddString("return ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
+	case lispi.ICall:
+		instance := object.WriteContext.ClassInstanceVariable.Get()
+		cc.AddString(instance + "." + specificIns.Name)
 	case lispi.ISet:
 		cc.StartLine()
 		defer cc.EndLine()
@@ -333,8 +332,10 @@ func (object ClassGenerator) writeExpressionInstruction(
 	switch specificIns := ins.(type) {
 	case lispi.IGet:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
-		cc.AddString(instance + ".get" +
-			util.String.Capitalize(specificIns.Name) + "()")
+		cc.AddString(instance + "." + specificIns.Name)
+	case lispi.ICall:
+		instance := object.WriteContext.ClassInstanceVariable.Get()
+		cc.AddString(instance + "." + specificIns.Name)
 	case lispi.VGet:
 		cc.AddString(specificIns.Name)
 	case lispi.LiteralBool:
@@ -345,6 +346,13 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString(str)
 	case lispi.LiteralInt:
 		cc.AddString(specificIns.Value)
+	case lispi.LiteralString:
+		out, _ := utilstr.AtomicReplace(specificIns.Value,
+			map[string]string{
+				`"`: `\"`,
+				`\`: `\\`,
+			})
+		cc.AddString(`"` + out + `"`)
 	case lispi.And:
 		object.writeExpressionInstruction(cc, specificIns.A)
 		cc.AddString(" && ")
@@ -403,6 +411,10 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString("len(")
 		object.writeExpressionInstruction(cc, specificIns.StringExpression)
 		cc.AddString(")")
+	case lispi.StrCat:
+		object.writeExpressionInstruction(cc, specificIns.StringExpressionA)
+		cc.AddString(" + ")
+		object.writeExpressionInstruction(cc, specificIns.StringExpressionB)
 	case lispi.ISerializeJSON:
 		// TODO: maybe replace this with a lispi statement
 		// TODO: creating this anonymous function makes me

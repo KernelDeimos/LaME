@@ -3,14 +3,16 @@
   fields:
   - name: age
     type: int
-  - [name, string]
+  - name: name
+    type: string
+  #- [name, string]
   - [email, string]
   methods:
   - name: toCSV
     args: []
     return: string
     gencode: |
-      (return (iget name))
+      (return (icall getName ()))
   - name: getDiscountPercent
     args: []
     return: int
