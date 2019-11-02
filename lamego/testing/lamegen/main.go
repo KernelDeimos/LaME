@@ -32,6 +32,10 @@ func main() {
 		e := engine.NewEngine(config)
 		coreplugin.Plugin{}.Install(e)
 
+		fileWalk := &engine.FileWalkModelProducer{}
+		fileWalk.SetSourceDirectory(conf.ModelSourceDirectory)
+		e.InstallModelProducer(fileWalk)
+
 		switch conf.TargetLanguage {
 		case "go":
 			makeClassGeneratorGo().Install(e)

@@ -202,28 +202,6 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 
 	e.runtimeTypeMaps = map[string]map[string]map[string]target.Type{}
 
-	// Walk model source directory and load models
-	callback := func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) == ".yaml" {
-			m := []model.Model{}
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			err = yaml.Unmarshal(b, &m)
-			if err != nil {
-				return err
-			}
-			allModels = append(allModels, m[1:]...)
-		}
-		return nil
-	}
-	err := filepath.Walk(
-		runConfig.ModelSourceDirectory, callback)
-	if err != nil {
-		return DeFactoEngineError{M: err.Error()}
-	}
-
 	var fm target.FileManager = target.NewDeFactoFileManager(
 		runConfig.GeneratorOutputDirectory,
 		target.CursorConfig{
@@ -259,9 +237,7 @@ func (e *Engine) Generate(runConfig EngineRunConfig) EngineError {
 	for i := 0; true; i++ {
 		logrus.Infof("Invoking model producers (round %d)", i)
 		for _, p := range e.ModelProducers {
-			if p != nil {
-				panic("todo")
-			}
+			p.InvokeModels()
 		}
 		if len(e.runtimeModelList) < 1 {
 			break
