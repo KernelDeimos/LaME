@@ -7,6 +7,7 @@ type SerializeMeta struct {
 type ExtraMeta map[string]string
 
 type ClassMeta struct {
-	Serialize SerializeMeta
-	Extra     ExtraMeta
+	Serialize   SerializeMeta
+	SourceModel string
+	Extra       ExtraMeta
 }

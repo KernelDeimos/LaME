@@ -128,6 +128,12 @@ func ParseListSimple(input string) ([]interface{}, error) {
 			// If in escape mode, add this rune unconditionally,
 			// then exit escape mode
 			if escape {
+				escaped := string(thisRune)
+				if escaped == "n" {
+					escaped = "\n"
+				} else if escaped == "t" {
+					escaped = "\t"
+				}
 				buffer += string(thisRune)
 				escape = false
 				continue

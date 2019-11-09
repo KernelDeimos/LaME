@@ -91,12 +91,13 @@ func (this SyntaxFrontendLisPINatural) processSequenceable(
 	name string, args []interface{},
 ) (lispi.SequenceableInstruction, error) {
 	validSequenceables := map[string]lispi.SequenceableInstruction{
-		"return": lispi.Return{},
-		"iset":   lispi.ISet{},
-		"icall":  lispi.ICall{},
-		"if":     lispi.If{},
-		"vset":   lispi.VSet{},
-		"while":  lispi.While{},
+		"return":   lispi.Return{},
+		"iset":     lispi.ISet{},
+		"icall":    lispi.ICall{},
+		"if":       lispi.If{},
+		"vset":     lispi.VSet{},
+		"while":    lispi.While{},
+		"continue": lispi.Continue{},
 	}
 
 	output, recognized := validSequenceables[name]
@@ -128,6 +129,7 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 		"strsub": lispi.StrSub{},
 		"strcat": lispi.StrSub{},
 		"==":     lispi.Eq{},
+		"!":      lispi.Not{},
 		"+":      lispi.Plus{},
 		"-":      lispi.Minus{},
 	}

@@ -1,7 +1,9 @@
 package util
 
 import (
-	"strings"
+	// "strings"
+
+	"github.com/iancoleman/strcase"
 )
 
 type LibUtilString struct {
@@ -12,5 +14,5 @@ var String LibUtilString
 
 func init() {
 	String = LibUtilString{}
-	String.Capitalize = strings.Title
+	String.Capitalize = strcase.ToCamel
 }

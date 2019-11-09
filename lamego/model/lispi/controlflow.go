@@ -7,6 +7,14 @@ type While struct {
 
 func (i While) AsSequenceableInstruction() SequenceableInstruction { return i }
 
+type Continue struct{}
+
+func (i Continue) AsSequenceableInstruction() SequenceableInstruction { return i }
+
+type Break struct{}
+
+func (i Break) AsSequenceableInstruction() SequenceableInstruction { return i }
+
 type If struct {
 	Condition ExpressionInstruction
 	Code      SequenceableInstruction

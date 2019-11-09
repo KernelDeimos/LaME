@@ -11,6 +11,59 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
+// Note: two constants below are a work-in-progress JSON parser for LisPI,
+//  but I decided to abandon this in favour of doing it after more advanced
+//  syntax frontends are implemented.
+const lispiSkipWhitespace = `
+		(if (|| (|| (== (vget txtchr) (str '\n')) (== (vget txtchr) (str '\t'))) (== (vget txtchr (str ' ')))) (
+			(vset i (+ (vget i) (int 1)))
+			(continue)
+		))
+`
+
+const LisPIDeserialize = `
+(vset state (int 0))
+(vset e (strlen (vget input)))
+(vset i (int 0))
+(while (< (vget i) (vget e)) (
+	(vset txtchr (strsub input (vget i) (+ (vget i) (int 1))))
+	(if (== (vget state) (int 0)) (` + /*state 0: wait for object*/ `
+		` + lispiSkipWhitespace + `
+		(if (! (== (vget txtchr) (str '{'))) (
+			(vset errmsg (str 'Invalid character when expecting object start'))
+			(return (vget errmsg))
+		))
+		(vset i (+ (vget i) (int 1)))
+		(vset state (int 2))
+		(continue)
+	))
+	(if (== (vget state) (int 2)) (` + /*state 1: wait for key*/ `
+		` + lispiSkipWhitespace + `
+		(if (! (== (vget txtchr) (str '"'))) (
+			(vset errmsg (str 'Invalid character when expecting key start'))
+			(return (vget errmsg))
+		))
+		(vset buffer (str ''))
+		(vset escape (bool false))
+		(vset i (+ (vget i) (int 1)))
+		(vset state (int 3))
+		(continue)
+	))
+	(if (== (vget state) (int 3)) (` + /*state 1: wait for key*/ `
+		` + lispiSkipWhitespace + `
+		(if (! (== (vget txtchr) (str '"'))) (
+			(vset errmsg (str 'Invalid character when expecting key start'))
+			(return (vget errmsg))
+		))
+		(vset keystart (vget i))
+		(vset i (+ (vget i) (int 1)))
+		(vset state (int 3))
+		(continue)
+	))
+))
+
+`
+
 type DefaultClassGenerator struct {
 	pluginapi.AbstractClassGenerator
 	models      []model.Model
@@ -63,6 +116,7 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 			Serialize: target.SerializeMeta{
 				JSON: true,
 			},
+			SourceModel: m.ID,
 		}
 
 		c.Variables = []target.Variable{}
@@ -245,6 +299,24 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 					},
 				},
 			})
+			/*
+				sf := parsing.SyntaxFrontendLisPINatural{}
+				instructions, err := sf.Process(LisPIDeserialize)
+				if err != nil {
+					panic(err)
+				}
+				c.Methods = append(c.Methods, target.Method{
+					Name: "deserializeJSON",
+					Return: target.Variable{
+						Type: target.String,
+					},
+					Visibility: target.VisibilityPublic,
+					Arguments:  []target.Variable{},
+					Code: lispi.FakeBlock{
+						StatementList: instructions,
+					},
+				})
+			*/
 		}
 
 	}

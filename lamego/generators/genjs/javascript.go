@@ -6,10 +6,11 @@ import (
 
 	"github.com/KernelDeimos/LaME/lamego/engine"
 	"github.com/KernelDeimos/LaME/lamego/engine/pluginapi"
+	"github.com/KernelDeimos/LaME/lamego/model"
 	"github.com/KernelDeimos/LaME/lamego/model/lispi"
 	"github.com/KernelDeimos/LaME/lamego/support"
 	"github.com/KernelDeimos/LaME/lamego/target"
-	"github.com/KernelDeimos/LaME/lamego/util"
+	// "github.com/KernelDeimos/LaME/lamego/util"
 )
 
 const constructorFunction = `
@@ -20,7 +21,8 @@ var constructor_ = function() {
 		obj[this.fields[i].name] = null;
 	}
 	for (var i=0; i < this.methods.length; i++) {
-		obj[this.methods[i].name] = this.methods[i].jsFunction;
+		obj[this.methods[i].name] = this.methods[i].jsFunction
+			.bind(obj);
 	}
 	return obj;
 }
@@ -32,15 +34,24 @@ type ClassGenerator struct {
 	WriteContext support.WriteContext
 	Config       map[string]string
 
+	models map[string]model.Model
+
 	objects map[string]struct{}
 
 	writtenObjects map[string]struct{}
 }
 
+func (object *ClassGenerator) AddModel(m model.Model) {
+	object.models[m.ID] = m
+}
+
 func (object *ClassGenerator) Install(api engine.EngineAPI) {
 	api.InstallClassReader(object)
+	api.InstallModelReader(object)
 	api.InstallCodeProducer(object)
 	api.InstallConfigurable(object)
+
+	object.models = map[string]model.Model{}
 
 	object.writtenObjects = map[string]struct{}{}
 }
@@ -99,6 +110,16 @@ func (object ClassGenerator) WriteClass(
 
 	cname := c.Package + "." + c.Name
 	cc.AddLine(cname + " = {};")
+
+	cc.StartLine()
+	cc.AddString(cname + ".model = ")
+	modl := object.models[c.Meta.SourceModel]
+	b, err := json.Marshal(modl)
+	if err != nil {
+		panic(err)
+	}
+	cc.AddString(string(b))
+	cc.EndLine()
 
 	cc.AddLine(cname + ".fields = [")
 	cc.IncrIndent()
@@ -256,8 +277,7 @@ func (object ClassGenerator) writeExpressionInstruction(
 	switch specificIns := ins.(type) {
 	case lispi.IGet:
 		instance := "this"
-		cc.AddString(instance + ".get" +
-			util.String.Capitalize(specificIns.Name) + "()")
+		cc.AddString(instance + "." + specificIns.Name)
 	case lispi.VGet:
 		cc.AddString(specificIns.Name)
 	case lispi.LiteralBool:

@@ -323,6 +323,10 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		object.writeSequenceableInstruction(cc, specificIns.Code)
 		cc.DecrIndent()
 		cc.AddLine("}")
+	case lispi.Continue:
+		cc.AddLine("continue")
+	case lispi.Break:
+		cc.AddLine("break")
 	}
 }
 
@@ -371,8 +375,9 @@ func (object ClassGenerator) writeExpressionInstruction(
 	case lispi.LiteralString:
 		out, _ := utilstr.AtomicReplace(specificIns.Value,
 			map[string]string{
-				`"`: `\"`,
-				`\`: `\\`,
+				`"`:  `\"`,
+				"\n": `\n`,
+				"\t": `\t`,
 			})
 		cc.AddString(`"` + out + `"`)
 	case lispi.And:

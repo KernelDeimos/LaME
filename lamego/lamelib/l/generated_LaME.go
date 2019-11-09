@@ -2,16 +2,14 @@
 
 package l
 
-import "encoding/json"
-
 type String struct {
 }
 func (o *String) IndexOf(subject string,substr string) int {
-	var i int
-	var e int
 	var testval string
 	var lensubject int
 	var lensubstr int
+	var i int
+	var e int
 	
 	lensubject = len(subject)
 	lensubstr = len(substr)
