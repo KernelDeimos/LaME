@@ -2,6 +2,7 @@ package genjs
 
 import (
 	"encoding/json"
+	"github.com/KernelDeimos/gottagofast/utilstr"
 	"strings"
 
 	"github.com/KernelDeimos/LaME/lamego/engine"
@@ -247,6 +248,11 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		cc.AddString(instance + "." + specificIns.Name +
 			" = ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
+	case lispi.VSet:
+		cc.StartLine()
+		defer cc.EndLine()
+		cc.AddString(specificIns.Name + " = ")
+		object.writeExpressionInstruction(cc, specificIns.Expression)
 	case lispi.If:
 		cc.StartLine()
 		cc.AddString("if ( ")
@@ -278,6 +284,15 @@ func (object ClassGenerator) writeExpressionInstruction(
 	case lispi.IGet:
 		instance := "this"
 		cc.AddString(instance + "." + specificIns.Name)
+	case lispi.ICall:
+		cc.AddString("this." + specificIns.Name + "(")
+		for i, expr := range specificIns.Arguments.Expressions {
+			if i != 0 {
+				cc.AddString(", ")
+			}
+			object.writeExpressionInstruction(cc, expr)
+		}
+		cc.AddString(")")
 	case lispi.VGet:
 		cc.AddString(specificIns.Name)
 	case lispi.LiteralBool:
@@ -288,6 +303,14 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString(str)
 	case lispi.LiteralInt:
 		cc.AddString(" " + specificIns.Value + " ")
+	case lispi.LiteralString:
+		out, _ := utilstr.AtomicReplace(specificIns.Value,
+			map[string]string{
+				`"`:  `\"`,
+				"\n": `\n`,
+				"\t": `\t`,
+			})
+		cc.AddString(`"` + out + `"`)
 	case lispi.And:
 		object.writeExpressionInstruction(cc, specificIns.A)
 		cc.AddString(" && ")
@@ -312,6 +335,22 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString("!(")
 		object.writeExpressionInstruction(cc, specificIns.A)
 		cc.AddString(")")
+	case lispi.StrSub:
+		object.writeExpressionInstruction(cc, specificIns.StringExpression)
+		cc.AddString(".substring(")
+		object.writeExpressionInstruction(cc, specificIns.BeginAt)
+		cc.AddString(",")
+		object.writeExpressionInstruction(cc, specificIns.EndAt)
+	case lispi.StrLen:
+		object.writeExpressionInstruction(cc, specificIns.StringExpression)
+		cc.AddString(".length")
+	case lispi.StrCat:
+		object.writeExpressionInstruction(cc, specificIns.StringExpressionA)
+		cc.AddString(" + ")
+		object.writeExpressionInstruction(cc, specificIns.StringExpressionB)
+	case lispi.IntToString:
+		cc.AddString(`""+`)
+		object.writeExpressionInstruction(cc, specificIns.IntExpression)
 	case lispi.ISerializeJSON:
 		// TODO: maybe replace this with a lispi statement
 		// TODO: creating this anonymous function makes me

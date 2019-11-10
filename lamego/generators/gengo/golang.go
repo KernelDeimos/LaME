@@ -34,12 +34,14 @@ type ClassGenerator struct {
 
 	WriteContext support.WriteContext
 	Config       map[string]interface{}
+	MethodNames  map[string]string
 
 	// Hack; needs to be fixed it this becomes threaded
 	fileState *FileState
 }
 
 func (object *ClassGenerator) Install(api engine.EngineAPI) {
+	object.MethodNames = map[string]string{}
 	api.InstallClassReader(object)
 	api.InstallCodeProducer(object)
 	api.InstallConfigurable(object)
@@ -119,6 +121,14 @@ func (object ClassGenerator) WriteClass(
 
 	// Need to close the struct; methods go outside
 	cc.AddLine("}")
+
+	for _, m := range c.Methods {
+		mTargetName := m.Name
+		if m.Visibility == target.VisibilityPublic {
+			mTargetName = strings.Title(m.Name)
+		}
+		object.MethodNames[m.Name] = mTargetName
+	}
 
 	for _, m := range c.Methods {
 		object.writeMethod(c, cc, m, filestate)
@@ -283,8 +293,11 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		cc.AddString("return ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
 	case lispi.ICall:
+		// TODO: target class validation should prevent
+		//   specificIns.Name from being unrecognized
+		mCallName := object.MethodNames[specificIns.Name]
 		instance := object.WriteContext.ClassInstanceVariable.Get()
-		cc.AddString(instance + "." + specificIns.Name + "(")
+		cc.AddString(instance + "." + mCallName + "(")
 		for i, expr := range specificIns.Arguments.Expressions {
 			if i != 0 {
 				cc.AddString(", ")
@@ -353,8 +366,11 @@ func (object ClassGenerator) writeExpressionInstruction(
 		instance := object.WriteContext.ClassInstanceVariable.Get()
 		cc.AddString(instance + "." + specificIns.Name)
 	case lispi.ICall:
+		// TODO: target class validation should prevent
+		//   specificIns.Name from being unrecognized
+		mCallName := object.MethodNames[specificIns.Name]
 		instance := object.WriteContext.ClassInstanceVariable.Get()
-		cc.AddString(instance + "." + specificIns.Name + "(")
+		cc.AddString(instance + "." + mCallName + "(")
 		for i, expr := range specificIns.Arguments.Expressions {
 			if i != 0 {
 				cc.AddString(", ")

@@ -134,6 +134,25 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Name: issetName,
 				Type: target.Bool,
 			})
+			var defaultExpr lispi.ExpressionInstruction = lispi.IGet{
+				Name: privateName,
+			}
+			if fieldType.TypeOfType == target.PrimitiveType {
+				switch fieldType.Identifier {
+				case target.PrimitiveString:
+					defaultExpr = lispi.LiteralString{
+						Value: "",
+					}
+				case target.PrimitiveInt:
+					defaultExpr = lispi.LiteralInt{
+						Value: "0", // TODO: why string?
+					}
+				case target.PrimitiveBool:
+					defaultExpr = lispi.LiteralBool{
+						Value: false,
+					}
+				}
+			}
 			c.Methods = append(c.Methods, target.Method{
 				Name: "get" + util.String.Capitalize(f.Name),
 				Return: target.Variable{
@@ -143,6 +162,14 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Arguments:  []target.Variable{},
 				Code: lispi.FakeBlock{
 					StatementList: []lispi.SequenceableInstruction{
+						lispi.If{
+							Condition: lispi.Not{
+								A: lispi.IGet{Name: issetName},
+							},
+							Code: lispi.Return{
+								Expression: defaultExpr,
+							},
+						},
 						lispi.Return{
 							Expression: lispi.IGet{
 								Name: privateName,
@@ -241,6 +268,9 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 		}
 
 		if c.Meta.Serialize.JSON {
+			process := lispi.FakeBlock{
+				StatementList: []lispi.SequenceableInstruction{},
+			}
 			out := lispi.StrCat{
 				StringExpressionA: lispi.StrCat{
 					StringExpressionA: lispi.LiteralString{Value: "{"},
@@ -250,6 +280,12 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 			}
 			doComma := false
 			for _, f := range m.Fields {
+				fieldGetter := lispi.ICall{
+					Name: "get" + util.String.Capitalize(f.Name),
+					Arguments: lispi.ExpressionList{
+						Expressions: []lispi.ExpressionInstruction{},
+					},
+				}
 				maybeComma := func(in lispi.ExpressionInstruction) lispi.ExpressionInstruction {
 					if doComma {
 						return lispi.StrCat{
@@ -267,12 +303,36 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 						expr = lispi.StrCat{
 							StringExpressionA: lispi.StrCat{
 								StringExpressionA: lispi.LiteralString{Value: `"`},
-								StringExpressionB: lispi.IGet{Name: f.Name + "__"},
+								// TODO: quote escape
+								StringExpressionB: fieldGetter,
 							}, StringExpressionB: lispi.LiteralString{Value: `"`}}
 					case model.PrimitiveInt:
 						expr = lispi.IntToString{
-							IntExpression: lispi.IGet{Name: f.Name + "__"},
+							IntExpression: fieldGetter,
 						}
+					case model.PrimitiveBool:
+						process.StatementList = append(
+							process.StatementList,
+							lispi.FakeBlock{
+								StatementList: []lispi.SequenceableInstruction{
+									lispi.VSet{
+										Name: f.Name,
+										Expression: lispi.LiteralString{
+											Value: "false",
+										},
+									},
+									lispi.If{
+										Condition: fieldGetter,
+										Code: lispi.VSet{
+											Name: f.Name,
+											Expression: lispi.LiteralString{
+												Value: "true",
+											},
+										},
+									},
+								},
+							})
+						expr = lispi.VGet{Name: f.Name}
 					}
 					outA := out.StringExpressionA.(lispi.StrCat)
 					outA.StringExpressionB = lispi.StrCat{
@@ -293,6 +353,7 @@ func (p *DefaultClassGenerator) generateClass(m model.Model) (
 				Arguments:  []target.Variable{},
 				Code: lispi.FakeBlock{
 					StatementList: []lispi.SequenceableInstruction{
+						process,
 						lispi.Return{
 							Expression: out,
 						},
