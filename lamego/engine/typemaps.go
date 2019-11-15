@@ -72,6 +72,10 @@ func (e *Engine) genTypesForSequenceable(
 	}
 }
 
+// @deprecated
+// If this method is to be modified, use
+// model/intelligence/GetTypeForExpression instead and
+// then delete this method.
 func (e *Engine) getTypeForExpression(
 	c target.Class, m target.Method,
 	vars *map[string]target.Type,
