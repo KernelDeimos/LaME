@@ -240,11 +240,31 @@ func (object ClassGenerator) writeEssentials(
 	c target.Class, cc target.CodeCursor,
 	filestate *FileState,
 ) {
+	// Convert byte 32 to byte slice
 	cc.AddLine(fmt.Sprintf(MethodHeaderExpression,
 		c.Name, "laMEInternalTypeConversionForHashing",
 		"in [32]byte", "[]byte") + " {")
 	cc.IncrIndent()
 	cc.AddLine("return in[:]")
+	cc.DecrIndent()
+	cc.AddLine("}")
+
+	// Generate random string
+	filestate.imports["crypto/rand"] = struct{}{}
+	filestate.imports["encoding/base64"] = struct{}{}
+	cc.AddLine(fmt.Sprintf(MethodHeaderExpression,
+		c.Name, "laMEInternalRandomString",
+		"", "string") + " {")
+	cc.IncrIndent()
+	// TODO: add an AddBlock method for Cursor
+	cc.AddLine("b := make([]byte, 64)")
+	cc.AddLine("_, err := rand.Read(b)")
+	cc.AddLine("if err != nil {")
+	cc.IncrIndent()
+	cc.AddLine("panic(err)")
+	cc.DecrIndent()
+	cc.AddLine("}")
+	cc.AddLine("return base64.URLEncoding.EncodeToString(b)")
 	cc.DecrIndent()
 	cc.AddLine("}")
 }
@@ -327,6 +347,14 @@ func (object ClassGenerator) writeSequenceableInstruction(
 		cc.AddString(instance + "." + specificIns.Name +
 			" = ")
 		object.writeExpressionInstruction(cc, specificIns.Expression)
+	case lispi.Set:
+		cc.StartLine()
+		defer cc.EndLine()
+		instance := object.WriteContext.ClassInstanceVariable.Get()
+		cc.AddString(instance + ".Set" +
+			util.String.Capitalize(specificIns.Name) + "(")
+		object.writeExpressionInstruction(cc, specificIns.Expression)
+		cc.AddString(")")
 	case lispi.VSet:
 		cc.StartLine()
 		defer cc.EndLine()
@@ -483,6 +511,8 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString("string(o.laMEInternalTypeConversionForHashing(sha256.Sum256([]byte(")
 		object.writeExpressionInstruction(cc, specificIns.StringExpression)
 		cc.AddString("))))")
+	case lispi.StrSalt:
+		cc.AddString("o.laMEInternalRandomString()")
 	case lispi.IntToString:
 		object.fileState.imports["fmt"] = struct{}{}
 		cc.AddString("fmt.Sprint(")

@@ -18,6 +18,9 @@ type Field struct {
 	Name       string     `yaml:"name"`
 	Type       string     `yaml:"type"`
 	Visibility Visibility `yaml:"visibility"`
+	// TODO: implement in code generator
+	Getter *Method
+	Setter *Method
 }
 
 type Method struct {

@@ -67,6 +67,7 @@ func (e *Engine) genTypesForSequenceable(
 		} else {
 			(*vars)[specificIns.Name] = t
 		}
+		// TODO: case lispi.Set:
 	default:
 		// logrus.Warn(ins)
 	}
@@ -108,6 +109,8 @@ func (e *Engine) getTypeForExpression(
 	case lispi.StrCat:
 		return target.String
 	case lispi.StrHash:
+		return target.String
+	case lispi.StrSalt:
 		return target.String
 	case lispi.IGet:
 		for _, ivar := range c.Variables {

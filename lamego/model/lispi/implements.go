@@ -9,11 +9,12 @@ func (i $1) AsExpressionInstruction() ExpressionInstruction { return i }
 //::end
 */
 
-//::gen repcsv (expression) StrLen StrSub StrCat StrHash
+//::gen repcsv (expression) StrLen StrSub StrCat StrHash StrSalt
 func (i StrLen) AsExpressionInstruction() ExpressionInstruction { return i }
 func (i StrSub) AsExpressionInstruction() ExpressionInstruction { return i }
 func (i StrCat) AsExpressionInstruction() ExpressionInstruction { return i }
 func (i StrHash) AsExpressionInstruction() ExpressionInstruction { return i }
+func (i StrSalt) AsExpressionInstruction() ExpressionInstruction { return i }
 //::end
 
 //::gen repcsv (expression) Plus Minus Divide Multiply

@@ -96,6 +96,7 @@ func (this SyntaxFrontendLisPINatural) processSequenceable(
 		"icall":    lispi.ICall{},
 		"if":       lispi.If{},
 		"vset":     lispi.VSet{},
+		"set":      lispi.Set{},
 		"while":    lispi.While{},
 		"continue": lispi.Continue{},
 	}
@@ -130,6 +131,7 @@ func (this SyntaxFrontendLisPINatural) processExpression(
 		"strsub":  lispi.StrSub{},
 		"strcat":  lispi.StrCat{},
 		"strhash": lispi.StrHash{},
+		"strsalt": lispi.StrSalt{},
 		"==":      lispi.Eq{},
 		"!":       lispi.Not{},
 		"+":       lispi.Plus{},
