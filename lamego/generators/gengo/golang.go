@@ -14,6 +14,7 @@ import (
 	"github.com/KernelDeimos/LaME/lamego/support/golang"
 	"github.com/KernelDeimos/LaME/lamego/support/typenamesupport"
 	"github.com/KernelDeimos/LaME/lamego/target"
+	"github.com/KernelDeimos/LaME/lamego/util"
 )
 
 var MethodHeaderExpression = "func (o *%s) %s(%s) %s"
@@ -130,6 +131,8 @@ func (object ClassGenerator) WriteClass(
 		object.MethodNames[m.Name] = mTargetName
 	}
 
+	object.writeEssentials(c, cc, filestate)
+
 	for _, m := range c.Methods {
 		object.writeMethod(c, cc, m, filestate)
 	}
@@ -231,6 +234,19 @@ func (object ClassGenerator) writeMethod(
 	defer cc.DecrIndent()
 
 	object.writeFakeBlock(cc, m.Code)
+}
+
+func (object ClassGenerator) writeEssentials(
+	c target.Class, cc target.CodeCursor,
+	filestate *FileState,
+) {
+	cc.AddLine(fmt.Sprintf(MethodHeaderExpression,
+		c.Name, "laMEInternalTypeConversionForHashing",
+		"in [32]byte", "[]byte") + " {")
+	cc.IncrIndent()
+	cc.AddLine("return in[:]")
+	cc.DecrIndent()
+	cc.AddLine("}")
 }
 
 func (object ClassGenerator) getTypeString(filestate *FileState, c target.Class, t target.Type) (string, bool) {
@@ -365,6 +381,10 @@ func (object ClassGenerator) writeExpressionInstruction(
 	case lispi.IGet:
 		instance := object.WriteContext.ClassInstanceVariable.Get()
 		cc.AddString(instance + "." + specificIns.Name)
+	case lispi.Get:
+		instance := object.WriteContext.ClassInstanceVariable.Get()
+		cc.AddString(instance + ".Get" +
+			util.String.Capitalize(specificIns.Name) + "()")
 	case lispi.ICall:
 		// TODO: target class validation should prevent
 		//   specificIns.Name from being unrecognized
@@ -458,6 +478,11 @@ func (object ClassGenerator) writeExpressionInstruction(
 		object.writeExpressionInstruction(cc, specificIns.StringExpressionA)
 		cc.AddString(" + ")
 		object.writeExpressionInstruction(cc, specificIns.StringExpressionB)
+	case lispi.StrHash:
+		object.fileState.imports["crypto/sha256"] = struct{}{}
+		cc.AddString("string(o.laMEInternalTypeConversionForHashing(sha256.Sum256([]byte(")
+		object.writeExpressionInstruction(cc, specificIns.StringExpression)
+		cc.AddString("))))")
 	case lispi.IntToString:
 		object.fileState.imports["fmt"] = struct{}{}
 		cc.AddString("fmt.Sprint(")

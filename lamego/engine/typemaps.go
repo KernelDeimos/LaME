@@ -107,6 +107,8 @@ func (e *Engine) getTypeForExpression(
 		return target.String
 	case lispi.StrCat:
 		return target.String
+	case lispi.StrHash:
+		return target.String
 	case lispi.IGet:
 		for _, ivar := range c.Variables {
 			if ivar.Name == specificIns.Name {
@@ -144,6 +146,8 @@ func (e *Engine) getTypeForExpression(
 		return typ
 	case lispi.ISerializeJSON:
 		return target.String
+	case lispi.Eq:
+		return target.Bool
 	}
 	// by default, generate void type for expression to produce error
 	return target.Void

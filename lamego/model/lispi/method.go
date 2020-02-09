@@ -21,3 +21,16 @@ type ISet struct {
 }
 
 func (i ISet) AsSequenceableInstruction() SequenceableInstruction { return i }
+
+type Get struct {
+	Name string
+}
+
+func (i Get) AsExpressionInstruction() ExpressionInstruction { return i }
+
+type Set struct {
+	Name       string
+	Expression ExpressionInstruction
+}
+
+func (i Set) AsSequenceableInstruction() SequenceableInstruction { return i }
