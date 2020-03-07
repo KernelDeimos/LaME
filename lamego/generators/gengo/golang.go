@@ -507,8 +507,9 @@ func (object ClassGenerator) writeExpressionInstruction(
 		cc.AddString(" + ")
 		object.writeExpressionInstruction(cc, specificIns.StringExpressionB)
 	case lispi.StrHash:
+		object.fileState.imports["encoding/hex"] = struct{}{}
 		object.fileState.imports["crypto/sha256"] = struct{}{}
-		cc.AddString("string(o.laMEInternalTypeConversionForHashing(sha256.Sum256([]byte(")
+		cc.AddString("hex.EncodeToString(o.laMEInternalTypeConversionForHashing(sha256.Sum256([]byte(")
 		object.writeExpressionInstruction(cc, specificIns.StringExpression)
 		cc.AddString("))))")
 	case lispi.StrSalt:
